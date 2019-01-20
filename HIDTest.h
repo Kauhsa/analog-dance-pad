@@ -30,10 +30,6 @@
 
 #ifndef _HIDTEST_H_
 #define _HIDTEST_H_
-
-		#define WRITE_JOYSTICK 0
-		#define WRITE_RAW 1
-
 		#include <avr/io.h>
 		#include <avr/wdt.h>
 		#include <avr/power.h>
@@ -41,7 +37,6 @@
 		#include <string.h>
 
 		#include "Descriptors.h"
-		#include "Config/AppConfig.h"
 
 		#include <LUFA/Drivers/Board/LEDs.h>
 		#include <LUFA/Drivers/USB/USB.h>

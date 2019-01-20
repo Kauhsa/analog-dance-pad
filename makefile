@@ -41,3 +41,6 @@ include $(DMBS_PATH)/gcc.mk
 include $(DMBS_PATH)/hid.mk
 include $(DMBS_PATH)/avrdude.mk
 include $(DMBS_PATH)/atprogram.mk
+
+install:
+	teensy_loader_cli --mcu=atmega32u4 -w ./HIDTest.hex

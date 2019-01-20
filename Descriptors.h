@@ -36,16 +36,10 @@
 #ifndef _DESCRIPTORS_H_
 #define _DESCRIPTORS_H_
 
-	#define JoystickReportID 0x01
-	#define RawReportID 0x03
-
-
 	/* Includes: */
 		#include <avr/pgmspace.h>
 
 		#include <LUFA/Drivers/USB/USB.h>
-
-		#include "Config/AppConfig.h"
 
 	/* Type Defines: */
 		/** Type define for the device configuration descriptor structure. This must be defined in the
@@ -86,8 +80,10 @@
 		/** Endpoint address of the Generic HID reporting IN endpoint. */
 		#define GENERIC_IN_EPADDR         (ENDPOINT_DIR_IN | 1)
 
-		/** Size in bytes of the Generic HID reporting endpoint. */
-		#define GENERIC_EPSIZE            16
+		// Size in bytes of the Generic HID reporting endpoint.
+		// Note: you'll *need* to change this if your reports are
+		// getting bigger than this.
+		#define GENERIC_EPSIZE            32
 
 	/* Function Prototypes: */
 		uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,

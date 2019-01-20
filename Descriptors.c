@@ -44,45 +44,48 @@
  *  more details on HID report descriptors.
  */
 
-#define Buttons 8
-#define VendorPageNum 0x00
-#define CollectionUsage 0x01
-#define DataINUsage 0x02
-#define DataOUTUsage 0x03
-#define NumBytes 8
+#define BUTTON_COUNT 8
+#define SENSOR_COUNT 8
+#define DATA_BITS_BY_SENSOR 8
 
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
 {
-		HID_RI_USAGE_PAGE(16, (0xFF00 | VendorPageNum)),
-		HID_RI_USAGE(8, CollectionUsage),
+	HID_RI_USAGE_PAGE(8, 0x01),
+	HID_RI_USAGE(8, 0x04),
+	HID_RI_COLLECTION(8, 0x01),
+		HID_RI_USAGE_PAGE(16, 0xFF00), // vendor usage page
+		HID_RI_USAGE(8, 0x01),
 		HID_RI_COLLECTION(8, 0x00),
-			HID_RI_USAGE(8, DataINUsage),
+			HID_RI_USAGE(8, 0x01),
 			HID_RI_LOGICAL_MINIMUM(8, 0x00),
 			HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
-			HID_RI_REPORT_SIZE(8, 0x08),
-			HID_RI_REPORT_COUNT(8, NumBytes),
+			HID_RI_REPORT_SIZE(8, DATA_BITS_BY_SENSOR),
+			HID_RI_REPORT_COUNT(8, SENSOR_COUNT),
 			HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 		HID_RI_END_COLLECTION(0),
 
 		HID_RI_USAGE_PAGE(8, 0x09),
 		HID_RI_USAGE_MINIMUM(8, 0x01),
-		HID_RI_USAGE_MAXIMUM(8, Buttons),
+		HID_RI_USAGE_MAXIMUM(8, BUTTON_COUNT),
 		HID_RI_LOGICAL_MINIMUM(8, 0x00),
 		HID_RI_LOGICAL_MAXIMUM(8, 0x01),
 		HID_RI_REPORT_SIZE(8, 0x01),
-		HID_RI_REPORT_COUNT(8, Buttons),
+		HID_RI_REPORT_COUNT(8, BUTTON_COUNT),
 		HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
-	HID_RI_END_COLLECTION(0),
+	HID_RI_END_COLLECTION(0)
 
-/*
-	Output, todo:
-		HID_RI_USAGE(8, DataOUTUsage),
-		HID_RI_LOGICAL_MINIMUM(8, 0x00),
-		HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
-		HID_RI_REPORT_SIZE(8, 0x08),
-		HID_RI_REPORT_COUNT(8, NumBytes),
-		HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE)
-*/
+
+		// TODO: you'll need to add padding here if the amount of buttons is not divisible by 8.
+
+	/*
+		Output, todo:
+			HID_RI_USAGE(8, DataOUTUsage),
+			HID_RI_LOGICAL_MINIMUM(8, 0x00),
+			HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
+			HID_RI_REPORT_SIZE(8, 0x08),
+			HID_RI_REPORT_COUNT(8, NumBytes),
+			HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE)
+	*/
 };
 
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
@@ -168,7 +171,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 			.EndpointAddress        = GENERIC_IN_EPADDR,
 			.Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
 			.EndpointSize           = GENERIC_EPSIZE,
-			.PollingIntervalMS      = 0x01
+			.PollingIntervalMS      = 0x01 // = 1000ms, important!
 		},
 };
 

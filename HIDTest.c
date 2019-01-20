@@ -38,7 +38,7 @@
 #include "HIDTest.h"
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
-static uint8_t PrevHIDReportBuffer[GENERIC_REPORT_SIZE];
+static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
 
 /** LUFA HID Class driver interface configuration and state information. This structure is
  *  passed to all HID Class driver functions, so that multiple instances of the same class
@@ -60,8 +60,6 @@ USB_ClassInfo_HID_Device_t Generic_HID_Interface =
 			},
 	};
 
-int USB_WRITE_STATE;
-
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
  */
@@ -72,7 +70,7 @@ int main(void)
 
 	for (;;)
 	{
-		SendHIDPackages(&Generic_HID_Interface);
+		HID_Device_USBTask(&Generic_HID_Interface);
 		USB_USBTask();
 	}
 }
@@ -141,56 +139,24 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          void* ReportData,
                                          uint16_t* const ReportSize)
 {	
-	/* if (USB_WRITE_STATE == WRITE_JOYSTICK) {
-		// joystick
-		Joystick_Report* Data = (Joystick_Report*)ReportData; 
-		Data->Buttons = rand() > (RAND_MAX / 2) ? 0xFF : 0x00;
-		*ReportID = JoystickReportID;
-		*ReportSize = sizeof (Joystick_Report);
-	} if (USB_WRITE_STATE == WRITE_RAW) {
-		// raw data
-		uint8_t* Data = (uint8_t*)ReportData;
-		uint8_t random = rand();
+	uint8_t* Data = (uint8_t*) ReportData;
 
-		Data[0] = random;
-		Data[1] = random + 1;
-		Data[2] = random + 2;
-		Data[3] = random + 3;
-		Data[4] = random + 4;
-		Data[5] = random + 5;
-		Data[6] = random + 6;
-		Data[7] = random + 7;
+	// raw output
+	int RandomNumber = rand();
+	Data[0] = RandomNumber;
+	Data[1] = RandomNumber + 1;
+	Data[2] = RandomNumber + 2;
+	Data[3] = RandomNumber + 3;
+	Data[4] = RandomNumber + 4;
+	Data[5] = RandomNumber + 5;
+	Data[6] = RandomNumber + 6;
+	Data[7] = RandomNumber + 7;
 
-		*ReportID = RawReportID;
-		*ReportSize = GENERIC_REPORT_SIZE;
-	}	
+	// joystick output
+	Data[8] = rand() > (RAND_MAX / 2) ? 0xFF : 0x00;
 
-	return true; */
-
-/*
-
-		uint8_t* Data = (uint8_t*) ReportData;
-		uint8_t random = rand();
-		
-		// raw packet
-		Data[0] = RawReportID;
-		Data[1] = random;
-		Data[2] = random + 1;
-		Data[3] = random + 2;
-		Data[4] = random + 3;
-		Data[5] = random + 4;
-		Data[6] = random + 5;
-		Data[7] = random + 6;
-		Data[8] = random + 7;
-
-		// joystick packet
-		Data[9] = JoystickReportID;
-		Data[10] = rand() > (RAND_MAX / 2) ? 0xFF : 0x00;
-
-		// disable LUFA from trying to insert Report ID themselves
-		*ReportID = 0;
-		*ReportSize = 11;
-		return true; */
+	*ReportSize = 9;
+	return true;
 }
 
 /** HID class driver callback function for the processing of HID reports from the host.
@@ -207,66 +173,5 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const void* ReportData,
                                           const uint16_t ReportSize)
 {
-	// not useful.
-
-	/*uint8_t* Data       = (uint8_t*)ReportData;
-	uint8_t  NewLEDMask = LEDS_NO_LEDS;
-
-	if (Data[0])
-	  NewLEDMask |= LEDS_LED1;
-
-	if (Data[1])
-	  NewLEDMask |= LEDS_LED2;
-
-	if (Data[2])
-	  NewLEDMask |= LEDS_LED3;
-
-	if (Data[3])
-	  NewLEDMask |= LEDS_LED4;
-
-	LEDs_SetAllLEDs(NewLEDMask);*/
-}
-
-/*
- * Edited from HID_Device_USBTask;
- */ 
-void SendHIDPackages(USB_ClassInfo_HID_Device_t* const HIDInterfaceInfo)
-{
-	if (USB_DeviceState != DEVICE_STATE_Configured)
-	  return;
-
-	if (HIDInterfaceInfo->State.PrevFrameNum == USB_Device_GetFrameNumber())
-	{
-		#if defined(USB_DEVICE_OPT_LOWSPEED)
-		if (!(USB_Options & USB_DEVICE_OPT_LOWSPEED))
-		  return;
-		#else
-		return;
-		#endif
-	}
-
-	Endpoint_SelectEndpoint(HIDInterfaceInfo->Config.ReportINEndpoint.Address);
-
-	if (Endpoint_IsReadWriteAllowed())
-	{
-		HIDInterfaceInfo->State.IdleMSRemaining = HIDInterfaceInfo->State.IdleCount;
-
-		Endpoint_SelectEndpoint(HIDInterfaceInfo->Config.ReportINEndpoint.Address);
-
-		uint8_t RawReport[9];
-		uint8_t random = rand();
-		RawReport[0] = random;
-		RawReport[1] = random + 1;
-		RawReport[2] = random + 2;
-		RawReport[3] = random + 3;
-		RawReport[4] = random + 4;
-		RawReport[5] = random + 5;
-		RawReport[6] = random + 6;
-		RawReport[7] = random + 7;
-		RawReport[8] = rand() > (RAND_MAX / 2) ? 0xFF : 0x00;
-		Endpoint_Write_Stream_LE(RawReport, sizeof (RawReport), NULL);
-		Endpoint_ClearIN();
-
-		HIDInterfaceInfo->State.PrevFrameNum = USB_Device_GetFrameNumber();
-	}
+	// TODO!
 }
