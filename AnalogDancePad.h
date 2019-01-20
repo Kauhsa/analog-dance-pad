@@ -28,8 +28,8 @@
   this software.
 */
 
-#ifndef _HIDTEST_H_
-#define _HIDTEST_H_
+#ifndef _ANALOG_DANCE_PAD_H_
+#define _ANALOG_DANCE_PAD_H_
 		#include <avr/io.h>
 		#include <avr/wdt.h>
 		#include <avr/power.h>

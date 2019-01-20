@@ -35,7 +35,7 @@
  */
 
 #include <stdlib.h>
-#include "HIDTest.h"
+#include "AnalogDancePad.h"
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
@@ -104,10 +104,7 @@ void SetupHardware(void)
 /** Event handler for the library USB Configuration Changed event. */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
-	bool ConfigSuccess = true;
-
-	ConfigSuccess &= HID_Device_ConfigureEndpoints(&Generic_HID_Interface);
-
+	HID_Device_ConfigureEndpoints(&Generic_HID_Interface);
 	USB_Device_EnableSOFEvents();
 }
 

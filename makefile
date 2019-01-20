@@ -17,7 +17,7 @@ BOARD        = TEENSY2
 F_CPU        = 16000000
 F_USB        = $(F_CPU)
 OPTIMIZATION = s
-TARGET       = HIDTest
+TARGET       = AnalogDancePad
 SRC          = $(TARGET).c Descriptors.c $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = ./lufa/LUFA
 CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -IConfig/
@@ -43,4 +43,4 @@ include $(DMBS_PATH)/avrdude.mk
 include $(DMBS_PATH)/atprogram.mk
 
 install:
-	teensy_loader_cli --mcu=atmega32u4 -w ./HIDTest.hex
+	teensy_loader_cli --mcu=atmega32u4 -w ./AnalogDancePad.hex
