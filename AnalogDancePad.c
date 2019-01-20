@@ -45,79 +45,79 @@ static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
  *  within a device can be differentiated from one another.
  */
 USB_ClassInfo_HID_Device_t Generic_HID_Interface =
-	{
-		.Config =
-			{
-				.InterfaceNumber              = INTERFACE_ID_GenericHID,
-				.ReportINEndpoint             =
-					{
-						.Address              = GENERIC_IN_EPADDR,
-						.Size                 = GENERIC_EPSIZE,
-						.Banks                = 1,
-					},
-				.PrevReportINBuffer           = PrevHIDReportBuffer,
-				.PrevReportINBufferSize       = sizeof(PrevHIDReportBuffer),
-			},
-	};
+    {
+        .Config =
+            {
+                .InterfaceNumber              = INTERFACE_ID_GenericHID,
+                .ReportINEndpoint             =
+                    {
+                        .Address              = GENERIC_IN_EPADDR,
+                        .Size                 = GENERIC_EPSIZE,
+                        .Banks                = 1,
+                    },
+                .PrevReportINBuffer           = PrevHIDReportBuffer,
+                .PrevReportINBufferSize       = sizeof(PrevHIDReportBuffer),
+            },
+    };
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
  */
 int main(void)
 {
-	SetupHardware();
-	GlobalInterruptEnable();
+    SetupHardware();
+    GlobalInterruptEnable();
 
-	for (;;)
-	{
-		HID_Device_USBTask(&Generic_HID_Interface);
-		USB_USBTask();
-	}
+    for (;;)
+    {
+        HID_Device_USBTask(&Generic_HID_Interface);
+        USB_USBTask();
+    }
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
 #if (ARCH == ARCH_AVR8)
-	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
-	wdt_disable();
+    /* Disable watchdog if enabled by bootloader/fuses */
+    MCUSR &= ~(1 << WDRF);
+    wdt_disable();
 
-	/* Disable clock division */
-	clock_prescale_set(clock_div_1);
+    /* Disable clock division */
+    clock_prescale_set(clock_div_1);
 #elif (ARCH == ARCH_XMEGA)
-	/* Start the PLL to multiply the 2MHz RC oscillator to 32MHz and switch the CPU core to run from it */
-	XMEGACLK_StartPLL(CLOCK_SRC_INT_RC2MHZ, 2000000, F_CPU);
-	XMEGACLK_SetCPUClockSource(CLOCK_SRC_PLL);
+    /* Start the PLL to multiply the 2MHz RC oscillator to 32MHz and switch the CPU core to run from it */
+    XMEGACLK_StartPLL(CLOCK_SRC_INT_RC2MHZ, 2000000, F_CPU);
+    XMEGACLK_SetCPUClockSource(CLOCK_SRC_PLL);
 
-	/* Start the 32MHz internal RC oscillator and start the DFLL to increase it to 48MHz using the USB SOF as a reference */
-	XMEGACLK_StartInternalOscillator(CLOCK_SRC_INT_RC32MHZ);
-	XMEGACLK_StartDFLL(CLOCK_SRC_INT_RC32MHZ, DFLL_REF_INT_USBSOF, F_USB);
+    /* Start the 32MHz internal RC oscillator and start the DFLL to increase it to 48MHz using the USB SOF as a reference */
+    XMEGACLK_StartInternalOscillator(CLOCK_SRC_INT_RC32MHZ);
+    XMEGACLK_StartDFLL(CLOCK_SRC_INT_RC32MHZ, DFLL_REF_INT_USBSOF, F_USB);
 
-	PMIC.CTRL = PMIC_LOLVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm;
+    PMIC.CTRL = PMIC_LOLVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm;
 #endif
 
-	/* Hardware Initialization */
-	USB_Init();
+    /* Hardware Initialization */
+    USB_Init();
 }
 
 /** Event handler for the library USB Configuration Changed event. */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
-	HID_Device_ConfigureEndpoints(&Generic_HID_Interface);
-	USB_Device_EnableSOFEvents();
+    HID_Device_ConfigureEndpoints(&Generic_HID_Interface);
+    USB_Device_EnableSOFEvents();
 }
 
 /** Event handler for the library USB Control Request reception event. */
 void EVENT_USB_Device_ControlRequest(void)
 {
-	HID_Device_ProcessControlRequest(&Generic_HID_Interface);
+    HID_Device_ProcessControlRequest(&Generic_HID_Interface);
 }
 
 /** Event handler for the USB device Start Of Frame event. */
 void EVENT_USB_Device_StartOfFrame(void)
 {
-	HID_Device_MillisecondElapsed(&Generic_HID_Interface);
+    HID_Device_MillisecondElapsed(&Generic_HID_Interface);
 }
 
 /** HID class driver callback function for the creation of HID reports to the host.
@@ -136,24 +136,24 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          void* ReportData,
                                          uint16_t* const ReportSize)
 {	
-	uint8_t* Data = (uint8_t*) ReportData;
+    uint8_t* Data = (uint8_t*) ReportData;
 
-	// raw output
-	int RandomNumber = rand();
-	Data[0] = RandomNumber;
-	Data[1] = RandomNumber + 1;
-	Data[2] = RandomNumber + 2;
-	Data[3] = RandomNumber + 3;
-	Data[4] = RandomNumber + 4;
-	Data[5] = RandomNumber + 5;
-	Data[6] = RandomNumber + 6;
-	Data[7] = RandomNumber + 7;
+    // raw output
+    int RandomNumber = rand();
+    Data[0] = RandomNumber;
+    Data[1] = RandomNumber + 1;
+    Data[2] = RandomNumber + 2;
+    Data[3] = RandomNumber + 3;
+    Data[4] = RandomNumber + 4;
+    Data[5] = RandomNumber + 5;
+    Data[6] = RandomNumber + 6;
+    Data[7] = RandomNumber + 7;
 
-	// joystick output
-	Data[8] = rand() > (RAND_MAX / 2) ? 0xFF : 0x00;
+    // joystick output
+    Data[8] = rand() > (RAND_MAX / 2) ? 0xFF : 0x00;
 
-	*ReportSize = 9;
-	return true;
+    *ReportSize = 9;
+    return true;
 }
 
 /** HID class driver callback function for the processing of HID reports from the host.
@@ -170,5 +170,5 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const void* ReportData,
                                           const uint16_t ReportSize)
 {
-	// TODO!
+    // TODO!
 }
