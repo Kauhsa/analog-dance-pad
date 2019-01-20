@@ -40,6 +40,8 @@
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
 
+static uint8_t ButtonState = 0b00000000;
+
 /** LUFA HID Class driver interface configuration and state information. This structure is
  *  passed to all HID Class driver functions, so that multiple instances of the same class
  *  within a device can be differentiated from one another.
@@ -150,9 +152,10 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
     Data[7] = RandomNumber + 7;
 
     // joystick output
-    Data[8] = rand() > (RAND_MAX / 2) ? 0xFF : 0x00;
+    Data[8] = ButtonState;
 
     *ReportSize = 9;
+    *ReportID = 1;
     return true;
 }
 
@@ -170,5 +173,8 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const void* ReportData,
                                           const uint16_t ReportSize)
 {
-    // TODO!
+    if (ReportID == 2) {
+        uint8_t* Data = (uint8_t*) ReportData;
+        ButtonState = Data[0];
+    }
 }

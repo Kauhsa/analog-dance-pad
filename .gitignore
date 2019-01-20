@@ -9,3 +9,4 @@
 *.map
 *.bak
 *.class
+node_modules/
