@@ -44,11 +44,6 @@
  *  more details on HID report descriptors.
  */
 
-#define BUTTON_COUNT 8
-#define SENSOR_COUNT 8
-#define DATA_BYTES_BY_SENSOR 1
-#define OUTPUT_BYTES 8 // note that this means output from computer's point of view ie. "input to microcontroller"
-
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
 {
     HID_RI_USAGE_PAGE(8, 0x01),
@@ -61,8 +56,8 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
             HID_RI_USAGE(8, 0x01),
             HID_RI_LOGICAL_MINIMUM(8, 0x00),
             HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
-            HID_RI_REPORT_SIZE(8, DATA_BYTES_BY_SENSOR * 8),
-            HID_RI_REPORT_COUNT(8, SENSOR_COUNT),
+            HID_RI_REPORT_SIZE(8, 0x08),
+            HID_RI_REPORT_COUNT(8, RAW_INPUT_BYTES),
             HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
         HID_RI_END_COLLECTION(0),
 
@@ -83,22 +78,12 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
             HID_RI_LOGICAL_MINIMUM(8, 0x00),
             HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
             HID_RI_REPORT_SIZE(8, 0x08),
-            HID_RI_REPORT_COUNT(8, OUTPUT_BYTES),
+            HID_RI_REPORT_COUNT(8, RAW_OUTPUT_BYTES),
             HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
         HID_RI_END_COLLECTION(0),
     HID_RI_END_COLLECTION(0)
 
     // TODO: you'll need to add padding here if the amount of buttons is not divisible by 8.
-
-    /*
-        Output, todo:
-            HID_RI_USAGE(8, DataOUTUsage),
-            HID_RI_LOGICAL_MINIMUM(8, 0x00),
-            HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
-            HID_RI_REPORT_SIZE(8, 0x08),
-            HID_RI_REPORT_COUNT(8, NumBytes),
-            HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE)
-    */
 };
 
 /** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall

@@ -35,7 +35,10 @@
  */
 
 #include <stdlib.h>
+#include "Config/DancePadConfig.h"
 #include "AnalogDancePad.h"
+#include "Descriptors.h"
+#include "ADC.h"
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
@@ -69,6 +72,7 @@ int main(void)
 {
     SetupHardware();
     GlobalInterruptEnable();
+    ADC_Init();
 
     for (;;)
     {
@@ -122,6 +126,8 @@ void EVENT_USB_Device_StartOfFrame(void)
     HID_Device_MillisecondElapsed(&Generic_HID_Interface);
 }
 
+
+
 /** HID class driver callback function for the creation of HID reports to the host.
  *
  *  \param[in]     HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
@@ -137,24 +143,22 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          const uint8_t ReportType,
                                          void* ReportData,
                                          uint16_t* const ReportSize)
-{	
+{
     uint8_t* Data = (uint8_t*) ReportData;
 
-    // raw output
-    int RandomNumber = rand();
-    Data[0] = RandomNumber;
-    Data[1] = RandomNumber + 1;
-    Data[2] = RandomNumber + 2;
-    Data[3] = RandomNumber + 3;
-    Data[4] = RandomNumber + 4;
-    Data[5] = RandomNumber + 5;
-    Data[6] = RandomNumber + 6;
-    Data[7] = RandomNumber + 7;
+    for (uint8_t sensor = 0; sensor < SENSOR_COUNT; sensor++) {
+        uint16_t val = ADC_Read(sensor);
+        uint8_t dataPosition = sensor * 2; // 2 bytes per sensor 
+        Data[dataPosition] = (val & 0xFF00) >> 8;
+        Data[dataPosition + 1] = val & 0x00FF;
+    }
 
-    // joystick output
-    Data[8] = ButtonState;
-
-    *ReportSize = 9;
+    // joystick output is defined to be after ALL other input, thus this index
+    // TODO: works until buttons > 8
+    Data[RAW_INPUT_BYTES] = ButtonState;
+    
+    // TODO: works until buttons > 8
+    *ReportSize = RAW_INPUT_BYTES + 1;
     *ReportID = 1;
     return true;
 }

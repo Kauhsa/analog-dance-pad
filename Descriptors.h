@@ -38,8 +38,8 @@
 
     /* Includes: */
         #include <avr/pgmspace.h>
-
         #include <LUFA/Drivers/USB/USB.h>
+        #include <Config/DancePadConfig.h>
 
     /* Type Defines: */
         /** Type define for the device configuration descriptor structure. This must be defined in the
@@ -81,9 +81,7 @@
         #define GENERIC_IN_EPADDR         (ENDPOINT_DIR_IN | 1)
 
         // Size in bytes of the Generic HID reporting endpoint.
-        // Note: you'll *need* to change this if your reports are
-        // getting bigger than this.
-        #define GENERIC_EPSIZE            32
+        #define GENERIC_EPSIZE            64
 
     /* Function Prototypes: */
         uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
@@ -91,5 +89,8 @@
                                             const void** const DescriptorAddress)
                                             ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
+    /* Report configuration */
+        #define RAW_INPUT_BYTES (SENSOR_COUNT * 2) // input: microcontroller -> PC
+        #define RAW_OUTPUT_BYTES 1 // output: PC -> microcontroller – TODO: works until button count > 8
 #endif
 
