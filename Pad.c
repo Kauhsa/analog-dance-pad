@@ -5,8 +5,8 @@
 PadConfiguration PAD_CONFIGURATION = {
     .sensorThresholds = { [0 ... SENSOR_COUNT - 1] = 400 },
     .basePressure = 0,
-    .releaseMultiplier = 0.9,
-    .oldValueWeight = 1
+    .releaseMultiplier = 0.9hk,
+    .oldValueWeight = 1hk
 };
 
 PadState PAD_STATE = { 
@@ -15,14 +15,15 @@ PadState PAD_STATE = {
 };
 
 void Pad_UpdateState(const uint16_t newValues[SENSOR_COUNT]) {
-    float oldValueWeight = PAD_CONFIGURATION.oldValueWeight;
+    short accum oldValueWeight = PAD_CONFIGURATION.oldValueWeight;
 
     for (int i = 0; i < SENSOR_COUNT; i++) {
         uint16_t prevValue = PAD_STATE.sensorValues[i];
-        PAD_STATE.sensorValues[i] = (prevValue * oldValueWeight + newValues[i]) / (oldValueWeight + 1);
+        // believe it or not, this IS faster than just "/ (oldValueWeight + 1)"
+        PAD_STATE.sensorValues[i] = (prevValue * oldValueWeight + newValues[i]) * (1 / (oldValueWeight + 1));
     }
 
-    float releaseMultiplier = PAD_CONFIGURATION.releaseMultiplier;
+    short accum releaseMultiplier = PAD_CONFIGURATION.releaseMultiplier;
 
     // TODO: No special button to sensor mapping for now. "Extra" sensors are ignored.
     for (int i = 0; i < BUTTON_COUNT; i++) {
