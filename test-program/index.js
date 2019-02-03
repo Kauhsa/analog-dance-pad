@@ -25,6 +25,7 @@ async function main() {
 
   while (true) {
     const data = await readHidDevice(device);
+    //console.log(data)
 
     /* remove comment to log sensor data */
     /*

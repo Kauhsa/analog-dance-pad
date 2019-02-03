@@ -39,11 +39,10 @@
 #include "AnalogDancePad.h"
 #include "Descriptors.h"
 #include "ADC.h"
+#include "Pad.h"
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
-
-static uint8_t ButtonState = 0b00000000;
 
 /** LUFA HID Class driver interface configuration and state information. This structure is
  *  passed to all HID Class driver functions, so that multiple instances of the same class
@@ -144,22 +143,35 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          void* ReportData,
                                          uint16_t* const ReportSize)
 {
-    uint8_t* Data = (uint8_t*) ReportData;
+    // first, read all different sensors from ADC and update pad state.
+    uint16_t newSensorValues[SENSOR_COUNT]; 
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        newSensorValues[i] = ADC_Read(i);
+    }
+    Pad_UpdateState(newSensorValues);
 
-    for (uint8_t sensor = 0; sensor < SENSOR_COUNT; sensor++) {
-        uint16_t val = ADC_Read(sensor);
-        uint8_t dataPosition = sensor * 2; // 2 bytes per sensor 
-        Data[dataPosition] = (val & 0xFF00) >> 8;
-        Data[dataPosition + 1] = val & 0x00FF;
+
+    // then, construct a HID report.
+    uint8_t* data = (uint8_t*) ReportData;
+    *ReportID = 1;
+
+    // write raw sensor values to report
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        uint16_t sensorValue = PAD_STATE.sensorValues[i];
+        uint8_t dataPosition = i * 2; // 2 bytes per sensor 
+        data[dataPosition] = (sensorValue & 0xFF00) >> 8;
+        data[dataPosition + 1] = sensorValue & 0x00FF;
     }
 
+    // write raw button values to report. TODO: breaks when buttons > 8
     // joystick output is defined to be after ALL other input, thus this index
-    // TODO: works until buttons > 8
-    Data[RAW_INPUT_BYTES] = ButtonState;
-    
-    // TODO: works until buttons > 8
+    data[RAW_INPUT_BYTES] = 0x00;
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        data[RAW_INPUT_BYTES] |= PAD_STATE.buttonsPressed[i] << (BUTTON_COUNT - i - 1);
+    }
+
+    // TODO: also breaks when buttons > 8
     *ReportSize = RAW_INPUT_BYTES + 1;
-    *ReportID = 1;
     return true;
 }
 
@@ -177,8 +189,8 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const void* ReportData,
                                           const uint16_t ReportSize)
 {
-    if (ReportID == 2) {
+    /*if (ReportID == 2) {
         uint8_t* Data = (uint8_t*) ReportData;
         ButtonState = Data[0];
-    }
+    }*/
 }
