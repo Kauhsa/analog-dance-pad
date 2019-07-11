@@ -10,3 +10,4 @@
 *.bak
 *.class
 node_modules/
+obj/*!.gitkeep
