@@ -41,6 +41,8 @@
 #include "ADC.h"
 #include "Pad.h"
 
+#define BIT_SET(a,b) ((a) |= (1ULL<<(b)))
+
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
 
@@ -72,6 +74,7 @@ int main(void)
     SetupHardware();
     GlobalInterruptEnable();
     ADC_Init();
+    Pad_UpdateInternalConfiguration();
 
     for (;;)
     {
@@ -125,8 +128,6 @@ void EVENT_USB_Device_StartOfFrame(void)
     HID_Device_MillisecondElapsed(&Generic_HID_Interface);
 }
 
-
-
 /** HID class driver callback function for the creation of HID reports to the host.
  *
  *  \param[in]     HIDInterfaceInfo  Pointer to the HID class interface configuration structure being referenced
@@ -150,28 +151,20 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
     }
     Pad_UpdateState(newSensorValues);
 
-
     // then, construct a HID report.
-    uint8_t* data = (uint8_t*) ReportData;
-    *ReportID = 1;
+    InputHIDReport* inputHIDReport = ReportData;
 
-    // write raw sensor values to report
     for (int i = 0; i < SENSOR_COUNT; i++) {
-        uint16_t sensorValue = PAD_STATE.sensorValues[i];
-        uint8_t dataPosition = i * 2; // 2 bytes per sensor 
-        data[dataPosition] = (sensorValue & 0xFF00) >> 8;
-        data[dataPosition + 1] = sensorValue & 0x00FF;
+        inputHIDReport->extraData.sensorValues[i] = PAD_STATE.sensorValues[i];
     }
 
-    // write raw button values to report. TODO: breaks when buttons > 8
-    // joystick output is defined to be after ALL other input, thus this index
-    data[RAW_INPUT_BYTES] = 0x00;
     for (int i = 0; i < BUTTON_COUNT; i++) {
-        data[RAW_INPUT_BYTES] |= PAD_STATE.buttonsPressed[i] << (BUTTON_COUNT - i - 1);
+        // trol https://stackoverflow.com/a/47990
+        inputHIDReport->buttons[i / 8] ^= (-PAD_STATE.buttonsPressed[i] ^ inputHIDReport->buttons[i / 8]) & (1UL << i % 8);
     }
 
-    // TODO: also breaks when buttons > 8
-    *ReportSize = RAW_INPUT_BYTES + 1;
+    *ReportID = 1;
+    *ReportSize = sizeof (InputHIDReport);
     return true;
 }
 

@@ -89,8 +89,20 @@
                                             const void** const DescriptorAddress)
                                             ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
-    /* Report configuration */
-        #define RAW_INPUT_BYTES (SENSOR_COUNT * 2) // input: microcontroller -> PC
-        #define RAW_OUTPUT_BYTES 1 // output: PC -> microcontroller – TODO: works until button count > 8
+        #define CEILING(x,y) (((x) + (y) - 1) / (y))
+
+        // input means "input to computer", and output means "output to microcontroller"
+        typedef struct {
+            uint16_t sensorValues[SENSOR_COUNT];
+        } __attribute__((packed)) InputHIDReportExtraData;
+        
+        typedef struct {
+            InputHIDReportExtraData extraData;
+            uint8_t buttons[CEILING(BUTTON_COUNT, 8)];
+        } __attribute__((packed)) InputHIDReport;
+
+        typedef struct {
+            uint16_t someData;
+        } __attribute__((packed)) OutputHIDReport;
 #endif
 

@@ -30,7 +30,7 @@ async function main() {
     /*
     let sensors = []
     for (let i = 0; i < 8; i++) {
-      sensors.push(data.readUInt16BE((i * 2) + 1))
+      sensors.push(data.readUInt16BE((i * 2) + 2))
     }
     console.log(sensors)
     */
@@ -49,4 +49,3 @@ async function main() {
 }
 
 main().catch(e => console.error(e));
-
