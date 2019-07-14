@@ -1,0 +1,14 @@
+{
+  "eslint.workingDirectories": [
+    {
+      "directory": "./server",
+      "changeProcessCWD": true
+    }
+  ],
+  "eslint.validate": [
+    {
+      "language": "typescript",
+      "autoFix": true
+    },
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "incremental": true,
+    "target": "es6",
+    "module": "commonjs",
+    "lib": ["es6"],
+    "outDir": "./dist",
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true
+   },
+   "include": [
+     "src/"
+   ]
+}
