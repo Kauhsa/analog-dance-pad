@@ -1,3 +1,3 @@
-[submodule "lufa"]
-	path = lufa
+[submodule "firmware/teensy2/lufa"]
+	path = firmware/teensy2/lufa
 	url = https://github.com/abcminiuser/lufa
