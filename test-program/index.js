@@ -27,13 +27,13 @@ async function main() {
     const data = await readHidDevice(device);
 
     /* remove comment to log sensor data */
-    /*
+
     let sensors = []
-    for (let i = 0; i < 8; i++) {
-      sensors.push(data.readUInt16BE((i * 2) + 2))
+    for (let i = 0; i < 12; i++) {
+      sensors.push(data.readUInt16LE((i * 2) + 1))
     }
     console.log(sensors)
-    */
+
 
     counter++;
     
