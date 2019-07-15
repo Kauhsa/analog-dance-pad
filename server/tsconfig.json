@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "incremental": true,
-    "target": "es6",
+    "target": "es2018",
     "module": "commonjs",
-    "lib": ["es6"],
+    "lib": ["es2018"],
     "outDir": "./dist",
     "strict": true,
     "moduleResolution": "node",

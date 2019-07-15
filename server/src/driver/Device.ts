@@ -1,8 +1,13 @@
 import StrictEventEmitter from 'strict-event-emitter-types'
 import { EventEmitter } from 'events'
 
+export interface DeviceInputData {
+  sensors: number[]
+  buttons: boolean[]
+}
+
 export interface DeviceEvents {
-  sensorData: void
+  inputData: DeviceInputData
   disconnect: void
 }
 
@@ -11,15 +16,15 @@ export interface DeviceConfiguration {
   name: string
 }
 
+export interface DeviceProperties {
+  buttonCount: number
+  sensorCount: number
+}
+
 export interface Device extends StrictEventEmitter<EventEmitter, DeviceEvents> {
   id: string
-
-  properties: {
-    buttonCount: number
-    sensorCount: number
-    configuration: DeviceConfiguration
-  }
-
+  properties: DeviceProperties
+  configuration: DeviceConfiguration
   setConfiguration: (conf: DeviceConfiguration) => void
   close: () => void
 }
