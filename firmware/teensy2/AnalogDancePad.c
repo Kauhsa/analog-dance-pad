@@ -37,11 +37,9 @@
 #include <stdlib.h>
 #include "Config/DancePadConfig.h"
 #include "AnalogDancePad.h"
+#include "Communication.h"
 #include "Descriptors.h"
-#include "ADC.h"
 #include "Pad.h"
-
-#define BIT_SET(a,b) ((a) |= (1ULL<<(b)))
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
@@ -73,8 +71,7 @@ int main(void)
 {
     SetupHardware();
     GlobalInterruptEnable();
-    ADC_Init();
-    Pad_UpdateInternalConfiguration();
+    Pad_Initialize();
 
     for (;;)
     {
@@ -144,25 +141,7 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          void* ReportData,
                                          uint16_t* const ReportSize)
 {
-    // first, read all different sensors from ADC and update pad state.
-    uint16_t newSensorValues[SENSOR_COUNT]; 
-    for (int i = 0; i < SENSOR_COUNT; i++) {
-        newSensorValues[i] = ADC_Read(i);
-    }
-    Pad_UpdateState(newSensorValues);
-
-    // then, construct a HID report.
-    InputHIDReport* inputHIDReport = ReportData;
-
-    for (int i = 0; i < SENSOR_COUNT; i++) {
-        inputHIDReport->extraData.sensorValues[i] = PAD_STATE.sensorValues[i];
-    }
-
-    for (int i = 0; i < BUTTON_COUNT; i++) {
-        // trol https://stackoverflow.com/a/47990
-        inputHIDReport->buttons[i / 8] ^= (-PAD_STATE.buttonsPressed[i] ^ inputHIDReport->buttons[i / 8]) & (1UL << i % 8);
-    }
-
+    Communication_ProcessInputReportRequest(ReportData);
     *ReportID = 1;
     *ReportSize = sizeof (InputHIDReport);
     return true;
@@ -182,8 +161,7 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const void* ReportData,
                                           const uint16_t ReportSize)
 {
-    /*if (ReportID == 2) {
-        uint8_t* Data = (uint8_t*) ReportData;
-        ButtonState = Data[0];
-    }*/
+    if (ReportID == 2 && ReportSize == sizeof (OutputHIDReport)) {
+        Communication_ProcessOutputReport(ReportData);
+    }
 }

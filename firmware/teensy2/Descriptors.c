@@ -36,6 +36,7 @@
  */
 
 #include "Descriptors.h"
+#include "Communication.h"
 
 /** HID class report descriptor. This is a special descriptor constructed with values from the
  *  USBIF HID class specification to describe the reports and capabilities of the HID device. This
@@ -50,16 +51,6 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
     HID_RI_USAGE(8, 0x04),
     HID_RI_COLLECTION(8, 0x01),
         HID_RI_REPORT_ID(8, 0x01),
-        HID_RI_USAGE_PAGE(16, 0xFF00), // vendor usage page
-        HID_RI_USAGE(8, 0x01),
-        HID_RI_COLLECTION(8, 0x00),
-            HID_RI_USAGE(8, 0x01),
-            HID_RI_LOGICAL_MINIMUM(8, 0x00),
-            HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
-            HID_RI_REPORT_SIZE(8, 0x08),
-            HID_RI_REPORT_COUNT(8, sizeof (InputHIDReportExtraData)),
-            HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
-        HID_RI_END_COLLECTION(0),
 
         HID_RI_USAGE_PAGE(8, 0x09),
         HID_RI_USAGE_MINIMUM(8, 0x01),
@@ -71,6 +62,17 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
         HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
         
         // TODO: padding here if BUTTON_COUNT not divisible by 8
+
+        HID_RI_USAGE_PAGE(16, 0xFF00), // vendor usage page
+        HID_RI_USAGE(8, 0x01),
+        HID_RI_COLLECTION(8, 0x00),
+            HID_RI_USAGE(8, 0x01),
+            HID_RI_LOGICAL_MINIMUM(8, 0x00),
+            HID_RI_LOGICAL_MAXIMUM(8, 0xFF),
+            HID_RI_REPORT_SIZE(8, 0x08),
+            HID_RI_REPORT_COUNT(8, sizeof (InputHIDReportExtraData)),
+            HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+        HID_RI_END_COLLECTION(0),
 
         HID_RI_REPORT_ID(8, 0x02),
         HID_RI_USAGE_PAGE(16, 0xFF00), // vendor usage page

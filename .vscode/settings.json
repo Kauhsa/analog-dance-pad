@@ -10,5 +10,6 @@
       "language": "typescript",
       "autoFix": true
     },
-  ]
+  ],
+  "C_Cpp.default.cStandard": "c11"
 }

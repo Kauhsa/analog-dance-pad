@@ -7,21 +7,17 @@
     typedef struct {
         uint16_t sensorThresholds[SENSOR_COUNT];
         float releaseMultiplier;
-    } UserPadConfiguration;
-
-    typedef struct {
-        uint16_t sensorReleaseThresholds[SENSOR_COUNT];
-    } InternalPadConfiguration;
+    } __attribute__((packed)) PadConfiguration;
 
     typedef struct {
         uint16_t sensorValues[SENSOR_COUNT];
         bool buttonsPressed[BUTTON_COUNT];
     } PadState;
 
-    void Pad_UpdateInternalConfiguration(void);
-    void Pad_UpdateState(const uint16_t newValues[SENSOR_COUNT]);
+    void Pad_Initialize(void);
+    void Pad_UpdateState(void);
+    void Pad_UpdateConfiguration(const PadConfiguration* padConfiguration);
 
-    extern InternalPadConfiguration INTERNAL_PAD_CONF;
-    extern UserPadConfiguration USER_PAD_CONF;
+    extern PadConfiguration PAD_CONF;
     extern PadState PAD_STATE;
 #endif

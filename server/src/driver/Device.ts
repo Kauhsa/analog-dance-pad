@@ -11,11 +11,12 @@ export interface DeviceEvents {
   disconnect: void
 }
 
+// this is information that user is excepted to reconfigure
 export interface DeviceConfiguration {
   sensorThresholds: number[]
-  name: string
 }
 
+// this is information from device that cannot be changed
 export interface DeviceProperties {
   buttonCount: number
   sensorCount: number
