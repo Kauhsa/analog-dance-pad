@@ -9,6 +9,5 @@
 *.map
 *.bak
 *.class
-node_modules/
 build/**/!.gitkeep
 build/!makefile
