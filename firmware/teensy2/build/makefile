@@ -18,9 +18,9 @@ F_CPU        = 16000000
 F_USB        = $(F_CPU)
 OPTIMIZATION = 3
 TARGET       = AnalogDancePad
-SRC          = $(TARGET).c Descriptors.c ADC.c Pad.c $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
-LUFA_PATH    = ./lufa/LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -IConfig/
+SRC          = ../$(TARGET).c ../Descriptors.c ../ADC.c ../Pad.c $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
+LUFA_PATH    = ../lufa/LUFA
+CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -I../Config/ -I..
 LD_FLAGS     =
 
 # Default target

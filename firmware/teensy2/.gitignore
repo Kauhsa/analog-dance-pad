@@ -10,4 +10,5 @@
 *.bak
 *.class
 node_modules/
-obj/*!.gitkeep
+build/**/!.gitkeep
+build/!makefile
