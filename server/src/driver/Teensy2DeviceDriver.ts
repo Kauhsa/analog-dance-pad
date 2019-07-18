@@ -18,7 +18,7 @@ const OUTPUT_REPORT_TYPE_SET_NEW_CONFIGURATION = 0x02
 const INPUT_REPORT_TYPE_SENSOR_VALUES = 0x01
 const INPUT_REPORT_TYPE_CURRENT_CONFIGURATION = 0x02
 
-// in future version, I'd like to microcontroller tell this information
+// in future version, I'd like to device to tell this information
 const SENSOR_COUNT = 12
 const BUTTON_COUNT = 16
 
@@ -37,6 +37,40 @@ const promisifiedHIDRead = (device: HID.HID): Promise<Buffer> =>
     }
   })
 
+function getButtonFormatter(data: any) {
+  const bitArray = new Array(16)
+
+  for (let i = 0; i < 16; i++) {
+    bitArray[i] = (data >> i) % 2 != 0
+  }
+
+  return bitArray
+}
+
+const sensorValueExtraDataParser = new Parser().array('sensors', {
+  type: 'uint16le',
+  length: SENSOR_COUNT
+})
+
+const configurationExtraDataParser = new Parser()
+  .array('sensorThresholds', {
+    type: 'uint16le',
+    length: SENSOR_COUNT
+  })
+  .floatle('releaseThreshold')
+
+const inputReportParser = new Parser()
+  .uint8('reportId')
+  .uint16le('buttonBits')
+  .uint8('extraDataType')
+  .choice('extraData', {
+    tag: 'extraDataType',
+    choices: {
+      [INPUT_REPORT_TYPE_SENSOR_VALUES]: sensorValueExtraDataParser,
+      [INPUT_REPORT_TYPE_CURRENT_CONFIGURATION]: configurationExtraDataParser
+    }
+  })
+
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
   private onClose: () => void
@@ -48,37 +82,48 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     sensorCount: SENSOR_COUNT
   }
 
-  // TODO: ask from device
-  configuration: DeviceConfiguration = {
-    sensorThresholds: [0, 0, 0, 0, 0, 0, 0, 0]
-  }
+  configuration: DeviceConfiguration
 
   static async fromDevicePath(devicePath: string, onClose: () => void): Promise<Teensy2Device> {
     const hidDevice = new HID.HID(devicePath)
 
-    // write a configuration read request
-    hidDevice.write([OUTPUT_REPORT_ID, OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG])
+    try {
+      // write a configuration read request
+      hidDevice.write([OUTPUT_REPORT_ID, OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG])
 
-    // try to read configuration. 100 attempts should be plenty.
-    for (let i = 0; i < 100; i++) {
-      const data = await promisifiedHIDRead(hidDevice)
-      const reportType = data.readUInt8(3)
+      // try to read configuration. 100 attempts should be plenty.
+      // TODO: this needs some kind of timeout, nothing guarantees there will even be 100 reports
+      // to read.
+      for (let i = 0; i < 100; i++) {
+        const data = await promisifiedHIDRead(hidDevice)
+        const parsedReport = inputReportParser.parse(data)
 
-      if (reportType === INPUT_REPORT_TYPE_CURRENT_CONFIGURATION) {
-        return new Teensy2Device(devicePath, hidDevice, onClose)
+        if (parsedReport.extraDataType === INPUT_REPORT_TYPE_CURRENT_CONFIGURATION) {
+          const configuration = parsedReport.extraData as DeviceConfiguration // TODO: types
+          return new Teensy2Device(devicePath, configuration, hidDevice, onClose)
+        }
       }
-    }
 
-    throw new Error(
-      `Found a compatible HID device in ${devicePath}, but it didn't return configuration upon asking`
-    )
+      throw new Error(
+        `Found a compatible HID device in ${devicePath}, but it didn't return configuration upon asking`
+      )
+    } catch (e) {
+      hidDevice.close()
+      throw e
+    }
   }
 
-  private constructor(path: string, device: HID.HID, onClose: () => void) {
+  private constructor(
+    path: string,
+    configuration: DeviceConfiguration,
+    device: HID.HID,
+    onClose: () => void
+  ) {
     super()
+    this.id = 'teensy-2-device-' + path
+    this.configuration = configuration
     this.device = device
     this.onClose = onClose
-    this.id = 'teensy-2-device-' + path
     this.device.on('error', this.handleError)
     this.device.on('data', this.handleData)
   }
@@ -89,17 +134,15 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   }
 
   private handleData = (data: Buffer) => {
-    const sensors = new Array<number>(this.properties.sensorCount)
-    const buttons = new Array<boolean>(this.properties.buttonCount)
+    const parsed = inputReportParser.parse(data)
 
-    for (let i = 0; i < 12; i++) {
-      sensors[i] = data.readUInt16LE(i * 2 + 1)
+    if (parsed.extraDataType === INPUT_REPORT_TYPE_SENSOR_VALUES) {
+      const sensorValuesExtraData = parsed.extraData as any // TODO: types
+      this.emit('inputData', {
+        sensors: sensorValuesExtraData.sensors,
+        buttons: getButtonFormatter(parsed.buttonBits)
+      })
     }
-
-    // TODO: calculate button state
-    buttons.fill(false)
-
-    this.emit('inputData', { sensors, buttons })
   }
 
   public setConfiguration() {

@@ -14,6 +14,7 @@ export interface DeviceEvents {
 // this is information that user is excepted to reconfigure
 export interface DeviceConfiguration {
   sensorThresholds: number[]
+  releaseThreshold: number
 }
 
 // this is information from device that cannot be changed
