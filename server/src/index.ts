@@ -4,6 +4,7 @@ import expressWs, { Application } from 'express-ws'
 
 import { Teensy2DeviceDriver } from './driver/teensy2/Teensy2DeviceDriver'
 import { Server } from './server'
+import consola from 'consola'
 
 function start(port: number, host: string) {
   // start API
@@ -15,10 +16,7 @@ function start(port: number, host: string) {
   const server = new Server({ deviceDrivers: [new Teensy2DeviceDriver()] })
   app.use('/api', server.start())
 
-  app.listen(port, host, () =>
-    // tslint:disable-next-line no-console
-    console.log(`Application started at ${host}:${port}`)
-  )
+  app.listen(port, host, () => consola.info(`Application started, listening ${host}:${port}`))
 
   process.on('SIGINT', () => {
     server.close()

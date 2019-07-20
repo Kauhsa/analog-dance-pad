@@ -1,5 +1,6 @@
-import { Router } from 'express'
+import { Router, Request } from 'express'
 import * as WebSocket from 'ws'
+import consola from 'consola'
 
 import { Device, DeviceInputData, DeviceConfiguration, DeviceProperties } from './driver/Device'
 import { DeviceDriver } from './driver/Driver'
@@ -92,11 +93,16 @@ export class Server {
     device.on('inputData', data => this.handleInputData(device, data))
     device.on('eventRate', number => this.handleEventRate(device, number))
     this.sendToAllClients(this.getDevicesUpdatedMessage())
+    consola.info(`Connected to a new device id "${device.id}"`, {
+      properties: device.properties,
+      configuration: device.configuration
+    })
   }
 
   private handleDisconnectDevice = (device: Device) => {
     delete this.devices[device.id]
     this.sendToAllClients(this.getDevicesUpdatedMessage())
+    consola.info(`Disconnected from device id "${device.id}"`)
   }
 
   private handleInputData = (device: Device, inputData: DeviceInputData) => {
@@ -120,41 +126,62 @@ export class Server {
     })
   }
 
-  private handleSocketMessage = (ws: ExtendedWebSocket, data: WebSocket.Data) => {
+  private handleSocketMessage = (
+    ws: ExtendedWebSocket,
+    remoteAddress: string | undefined,
+    data: WebSocket.Data
+  ) => {
     try {
       const msg: InputMessage = JSON.parse(data.toString('utf-8'))
 
       if (msg.type === 'subscribeToDevice') {
         ws.subscribedDevices.add(msg.deviceId)
+        consola.info(
+          `Websocket connection from "${remoteAddress}" subscribed to device id "${msg.deviceId}"`
+        )
       } else if (msg.type === 'unsubscribeFromDevice') {
         ws.subscribedDevices.delete(msg.deviceId)
+        consola.info(
+          `Websocket connection from "${remoteAddress}" unsubscribed from device id "${msg.deviceId}`
+        )
       } else if (msg.type === 'updateConfiguration') {
         this.devices[msg.deviceId].setConfiguration(msg.configuration)
         this.sendToAllClients(this.getDevicesUpdatedMessage())
+        consola.info(`Device id ${msg.deviceId} configuration updated`, msg.configuration)
       } else {
-        console.error('Unknown message', data)
+        consola.warn(
+          `Received websocket message from "${remoteAddress}" that was not understood`,
+          data
+        )
       }
     } catch (e) {
-      console.error('Error while parsing message from socket', e)
+      consola.error('Error while parsing websocket message:', e)
     }
   }
 
-  private handleNewSocket = (ws: WebSocket) => {
+  private handleNewSocket = (ws: WebSocket, req: Request) => {
+    const remoteAddress = req.connection.remoteAddress
+
     const extendedSocket: ExtendedWebSocket = Object.assign(ws, {
       subscribedDevices: new Set<string>()
     })
 
     // add socket to websocket list
-    extendedSocket.on('message', data => this.handleSocketMessage(extendedSocket, data))
-    extendedSocket.on('close', () => this.handleDisconnectSocket(extendedSocket))
+    extendedSocket.on('message', data =>
+      this.handleSocketMessage(extendedSocket, remoteAddress, data)
+    )
+    extendedSocket.on('close', () => this.handleDisconnectSocket(extendedSocket, remoteAddress))
     this.webSockets.add(extendedSocket)
 
     // send initial server state to a new client
     this.sendToClient(extendedSocket, this.getDevicesUpdatedMessage())
+
+    consola.info('New websocket connection from', remoteAddress)
   }
 
-  private handleDisconnectSocket = (ws: ExtendedWebSocket) => {
+  private handleDisconnectSocket = (ws: ExtendedWebSocket, remoteAddress: string | undefined) => {
     this.webSockets.delete(ws)
+    consola.info('Disconnected websocket connection from', remoteAddress)
   }
 
   start(): Router {

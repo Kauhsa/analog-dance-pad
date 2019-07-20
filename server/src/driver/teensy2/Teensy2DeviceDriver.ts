@@ -1,5 +1,6 @@
 import * as HID from 'node-hid'
 import usbDetection from 'usb-detection'
+import consola from 'consola'
 
 import { DeviceDriver, DeviceDriverEvents } from '../Driver'
 import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from '../Device'
@@ -34,6 +35,7 @@ const promisifiedHIDRead = (device: HID.HID): Promise<Buffer> =>
 
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
+  private path: string
   private onClose: () => void
   private eventsSinceLastUpdate: number
   private eventRateInterval: NodeJS.Timeout
@@ -86,6 +88,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     onClose: () => void
   ) {
     super()
+    this.path = path
     this.id = 'teensy-2-device-' + path
     this.configuration = configuration
     this.device = device
@@ -99,7 +102,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   }
 
   private handleError = (e: Error) => {
-    console.error(e)
+    consola.error(`Error received from HID device in path "${this.path}":`, e)
     this.close()
   }
 
@@ -145,7 +148,7 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
       this.emit('newDevice', newDevice)
     } catch (e) {
       this.knownDevicePaths.delete(devicePath)
-      console.error('Could not connect to a new device - ', e)
+      consola.error('Could not connect to a new device:', e)
     }
   }
 
@@ -160,7 +163,7 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
 
       // this device doesn't have path, so we cannot know whether it's a new one or not. bail out.
       if (!devicePath) {
-        console.error('New device was detected, but no device path was returned')
+        consola.error('New device was detected, but no device path was returned')
         return
       }
 
@@ -177,6 +180,7 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
   }
 
   start() {
+    consola.info('Started Teensy2DeviceDriver, listening for new devices...')
     this.knownDevicePaths.clear()
 
     // first connect to whatever devices are connected to computer now
@@ -185,6 +189,7 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
     // ...and then start monitoring for future changes
     usbDetection.on('add', (device: { vendorId: number; productId: number }) => {
       if (device.vendorId === VENDOR_ID && device.productId === PRODUCT_ID) {
+        consola.info('New Teensy2Driver devices detected, connecting...')
         this.connectToNewDevices()
       }
     })
@@ -192,6 +197,7 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
   }
 
   close() {
+    consola.info('Stopped Teensy2DeviceDriver')
     usbDetection.stopMonitoring()
   }
 }

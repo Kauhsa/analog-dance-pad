@@ -1,5 +1,4 @@
 import { Parser } from 'binary-parser'
-import { basename } from 'path'
 
 export enum InputReportExtraDataType {
   SENSOR_VALUES = 0x01,
@@ -97,6 +96,8 @@ export const createInputReportParser = (buttonCount: number, sensorCount: number
       }
     }
 
-    throw new Error('Unknown extra data type')
+    throw new Error(
+      `Could not parse input report, unknown extra data type ${(parsed as any).extraDataType}`
+    )
   }
 }
