@@ -4,22 +4,18 @@ import usbDetection from 'usb-detection'
 import { DeviceDriver, DeviceDriverEvents } from '../Driver'
 import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from '../Device'
 import { createInputReportParser, InputReportExtraDataType } from './Teensy2InputReportParser'
+import { createOutputReportWriter } from './Teensy2OutputReportWriter'
 import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
 
 const VENDOR_ID = 0x03eb
 const PRODUCT_ID = 0x204f
-
-const INPUT_REPORT_ID = 0x01
-const OUTPUT_REPORT_ID = 0x02
-
-const OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG = 0x01
-const OUTPUT_REPORT_TYPE_SET_NEW_CONFIGURATION = 0x02
 
 // in future version, I'd like to device to tell this information
 const SENSOR_COUNT = 12
 const BUTTON_COUNT = 16
 
 const parseInputReport = createInputReportParser(BUTTON_COUNT, SENSOR_COUNT)
+const outputReportWriter = createOutputReportWriter(BUTTON_COUNT, SENSOR_COUNT)
 
 const promisifiedHIDRead = (device: HID.HID): Promise<Buffer> =>
   new Promise((resolve, reject) => {
@@ -35,20 +31,6 @@ const promisifiedHIDRead = (device: HID.HID): Promise<Buffer> =>
       reject(e)
     }
   })
-
-const createOutputReport = (data: number[]): number[] => {
-  // TODO: automatically define 30 or do some other measure. Windows is happy
-  // whether we send bytes of the full report length, but linux seems not to be.
-  const array = new Array(30).fill(0)
-  array[0] = OUTPUT_REPORT_ID
-  array[1] = OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG
-
-  for (let i = 0; i < data.length; i++) {
-    array[i + 1] = data[0]
-  }
-
-  return array
-}
 
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
@@ -70,7 +52,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
     try {
       // write a configuration read request
-      hidDevice.write(createOutputReport([OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG]))
+      hidDevice.write(outputReportWriter.requestForConfiguration())
 
       // try to read configuration. 100 attempts should be plenty.
       // TODO: this needs some kind of timeout, nothing guarantees there will even be 100 reports
@@ -138,8 +120,8 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.eventsSinceLastUpdate = 0
   }
 
-  public setConfiguration() {
-    /* todo */
+  public setConfiguration(configuration: DeviceConfiguration) {
+    this.device.write(outputReportWriter.setNewConfiguration(configuration))
   }
 
   close() {

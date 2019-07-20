@@ -17,6 +17,7 @@ type InputMessage =
       deviceId: string
     }
   | { type: 'unsubscribeFromDevice'; deviceId: string }
+  | { type: 'updateConfiguration'; deviceId: string; configuration: DeviceConfiguration }
 
 type OutputMessage =
   | {
@@ -121,12 +122,17 @@ export class Server {
 
   private handleSocketMessage = (ws: ExtendedWebSocket, data: WebSocket.Data) => {
     try {
-      const { type, ...rest }: InputMessage = JSON.parse(data.toString('utf-8'))
+      const msg: InputMessage = JSON.parse(data.toString('utf-8'))
 
-      if (type === 'subscribeToDevice') {
-        ws.subscribedDevices.add(rest.deviceId)
-      } else if (type === 'unsubscribeFromDevice') {
-        ws.subscribedDevices.delete(rest.deviceId)
+      if (msg.type === 'subscribeToDevice') {
+        ws.subscribedDevices.add(msg.deviceId)
+      } else if (msg.type === 'unsubscribeFromDevice') {
+        ws.subscribedDevices.delete(msg.deviceId)
+      } else if (msg.type === 'updateConfiguration') {
+        this.devices[msg.deviceId].setConfiguration(msg.configuration)
+        this.sendToAllClients(this.getDevicesUpdatedMessage())
+      } else {
+        console.error('Unknown message', data)
       }
     } catch (e) {
       console.error('Error while parsing message from socket', e)
