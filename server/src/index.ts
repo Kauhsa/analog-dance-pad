@@ -2,7 +2,7 @@ import cors from 'cors'
 import express from 'express'
 import expressWs, { Application } from 'express-ws'
 
-import { Teensy2DeviceDriver } from './driver/Teensy2DeviceDriver'
+import { Teensy2DeviceDriver } from './driver/teensy2/Teensy2DeviceDriver'
 import { Server } from './server'
 
 function start(port: number, host: string) {

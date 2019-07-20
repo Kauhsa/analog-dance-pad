@@ -3,7 +3,6 @@ import * as WebSocket from 'ws'
 
 import { Device, DeviceInputData, DeviceConfiguration, DeviceProperties } from './driver/Device'
 import { DeviceDriver } from './driver/Driver'
-import { stringify } from 'querystring'
 
 const SECOND_AS_NS = BigInt(1e9)
 const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(60) // 60hz

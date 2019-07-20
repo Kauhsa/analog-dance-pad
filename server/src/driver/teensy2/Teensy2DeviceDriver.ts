@@ -1,10 +1,10 @@
 import * as HID from 'node-hid'
 import usbDetection from 'usb-detection'
-import { Parser } from 'binary-parser'
 
-import { DeviceDriver, DeviceDriverEvents } from './Driver'
-import { ExtendableEmitter } from '../util/ExtendableStrictEmitter'
-import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from './Device'
+import { DeviceDriver, DeviceDriverEvents } from '../Driver'
+import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from '../Device'
+import { createInputReportParser, InputReportExtraDataType } from './Teensy2InputReportParser'
+import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
 
 const VENDOR_ID = 0x03eb
 const PRODUCT_ID = 0x204f
@@ -15,12 +15,11 @@ const OUTPUT_REPORT_ID = 0x02
 const OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG = 0x01
 const OUTPUT_REPORT_TYPE_SET_NEW_CONFIGURATION = 0x02
 
-const INPUT_REPORT_TYPE_SENSOR_VALUES = 0x01
-const INPUT_REPORT_TYPE_CURRENT_CONFIGURATION = 0x02
-
 // in future version, I'd like to device to tell this information
 const SENSOR_COUNT = 12
 const BUTTON_COUNT = 16
+
+const parseInputReport = createInputReportParser(BUTTON_COUNT, SENSOR_COUNT)
 
 const promisifiedHIDRead = (device: HID.HID): Promise<Buffer> =>
   new Promise((resolve, reject) => {
@@ -34,40 +33,6 @@ const promisifiedHIDRead = (device: HID.HID): Promise<Buffer> =>
       })
     } catch (e) {
       reject(e)
-    }
-  })
-
-function getButtonFormatter(data: any) {
-  const bitArray = new Array(16)
-
-  for (let i = 0; i < 16; i++) {
-    bitArray[i] = (data >> i) % 2 != 0
-  }
-
-  return bitArray
-}
-
-const sensorValueExtraDataParser = new Parser().array('sensors', {
-  type: 'uint16le',
-  length: SENSOR_COUNT
-})
-
-const configurationExtraDataParser = new Parser()
-  .array('sensorThresholds', {
-    type: 'uint16le',
-    length: SENSOR_COUNT
-  })
-  .floatle('releaseThreshold')
-
-const inputReportParser = new Parser()
-  .uint8('reportId')
-  .uint16le('buttonBits')
-  .uint8('extraDataType')
-  .choice('extraData', {
-    tag: 'extraDataType',
-    choices: {
-      [INPUT_REPORT_TYPE_SENSOR_VALUES]: sensorValueExtraDataParser,
-      [INPUT_REPORT_TYPE_CURRENT_CONFIGURATION]: configurationExtraDataParser
     }
   })
 
@@ -110,12 +75,15 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
       // try to read configuration. 100 attempts should be plenty.
       // TODO: this needs some kind of timeout, nothing guarantees there will even be 100 reports
       // to read.
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 5; i++) {
         const data = await promisifiedHIDRead(hidDevice)
-        const parsedReport = inputReportParser.parse(data)
+        const parsedReport = parseInputReport(data)
 
-        if (parsedReport.extraDataType === INPUT_REPORT_TYPE_CURRENT_CONFIGURATION) {
-          const configuration = parsedReport.extraData as DeviceConfiguration // TODO: types
+        if (parsedReport.extraData.type === InputReportExtraDataType.CURRENT_CONFIGURATION) {
+          const configuration: DeviceConfiguration = {
+            sensorThresholds: parsedReport.extraData.sensorThresholds,
+            releaseThreshold: parsedReport.extraData.releaseThreshold
+          }
           return new Teensy2Device(devicePath, configuration, hidDevice, onClose)
         }
       }
@@ -155,13 +123,12 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
   private handleData = (data: Buffer) => {
     this.eventsSinceLastUpdate++
-    const parsed = inputReportParser.parse(data)
+    const inputReport = parseInputReport(data)
 
-    if (parsed.extraDataType === INPUT_REPORT_TYPE_SENSOR_VALUES) {
-      const sensorValuesExtraData = parsed.extraData as any // TODO: types
+    if (inputReport.extraData.type === InputReportExtraDataType.SENSOR_VALUES) {
       this.emit('inputData', {
-        sensors: sensorValuesExtraData.sensors,
-        buttons: getButtonFormatter(parsed.buttonBits)
+        sensors: inputReport.extraData.sensorValues,
+        buttons: inputReport.buttons
       })
     }
   }
@@ -176,9 +143,9 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   }
 
   close() {
+    clearInterval(this.eventRateInterval)
     this.onClose()
     this.device.close()
-    clearInterval(this.eventRateInterval)
     this.emit('disconnect')
   }
 }
