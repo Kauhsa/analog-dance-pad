@@ -3,6 +3,7 @@ import * as WebSocket from 'ws'
 
 import { Device, DeviceInputData, DeviceConfiguration, DeviceProperties } from './driver/Device'
 import { DeviceDriver } from './driver/Driver'
+import { stringify } from 'querystring'
 
 const SECOND_AS_NS = BigInt(1e9)
 const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(60) // 60hz
@@ -13,10 +14,10 @@ interface Settings {
 
 type InputMessage =
   | {
-      type: 'subscribeToInputEvents'
+      type: 'subscribeToDevice'
       deviceId: string
     }
-  | { type: 'unsubscribeFromInputEvents'; deviceId: string }
+  | { type: 'unsubscribeFromDevice'; deviceId: string }
 
 type OutputMessage =
   | {
@@ -31,6 +32,11 @@ type OutputMessage =
         configuration: DeviceConfiguration
         properties: DeviceProperties
       }>
+    }
+  | {
+      type: 'eventRate'
+      deviceId: string
+      eventRate: number
     }
 
 type ExtendedWebSocket = WebSocket & {
@@ -61,6 +67,16 @@ export class Server {
     this.webSockets.forEach(ws => ws.send(msg))
   }
 
+  private sendToSubscribedDevices(device: Device, obj: OutputMessage) {
+    const msg = this.serializeMessage(obj)
+
+    for (const socket of this.webSockets) {
+      if (socket.subscribedDevices.has(device.id)) {
+        socket.send(msg)
+      }
+    }
+  }
+
   private getDevicesUpdatedMessage = () => ({
     type: 'devicesUpdated' as const,
     devices: Object.values(this.devices).map(({ id, configuration, properties }) => ({
@@ -74,6 +90,7 @@ export class Server {
     this.devices[device.id] = device
     device.on('disconnect', () => this.handleDisconnectDevice(device))
     device.on('inputData', data => this.handleInputData(device, data))
+    device.on('eventRate', number => this.handleEventRate(device, number))
     this.sendToAllClients(this.getDevicesUpdatedMessage())
   }
 
@@ -91,24 +108,25 @@ export class Server {
       return
     }
 
-    const msg = this.serializeMessage({ type: 'inputEvent', deviceId: device.id, inputData })
-
-    for (const socket of this.webSockets) {
-      if (socket.subscribedDevices.has(device.id)) {
-        socket.send(msg)
-      }
-    }
-
+    this.sendToSubscribedDevices(device, { type: 'inputEvent', deviceId: device.id, inputData })
     this.lastInputEventSent[device.id] = now
+  }
+
+  private handleEventRate = (device: Device, rate: number) => {
+    this.sendToSubscribedDevices(device, {
+      type: 'eventRate',
+      deviceId: device.id,
+      eventRate: rate
+    })
   }
 
   private handleSocketMessage = (ws: ExtendedWebSocket, data: WebSocket.Data) => {
     try {
       const { type, ...rest }: InputMessage = JSON.parse(data.toString('utf-8'))
 
-      if (type === 'subscribeToInputEvents') {
+      if (type === 'subscribeToDevice') {
         ws.subscribedDevices.add(rest.deviceId)
-      } else if (type === 'unsubscribeFromInputEvents') {
+      } else if (type === 'unsubscribeFromDevice') {
         ws.subscribedDevices.delete(rest.deviceId)
       }
     } catch (e) {

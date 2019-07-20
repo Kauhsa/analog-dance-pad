@@ -88,6 +88,8 @@ const createOutputReport = (data: number[]): number[] => {
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
   private onClose: () => void
+  private eventsSinceLastUpdate: number
+  private eventRateInterval: NodeJS.Timeout
 
   id: string
 
@@ -108,7 +110,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
       // try to read configuration. 100 attempts should be plenty.
       // TODO: this needs some kind of timeout, nothing guarantees there will even be 100 reports
       // to read.
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 1000; i++) {
         const data = await promisifiedHIDRead(hidDevice)
         const parsedReport = inputReportParser.parse(data)
 
@@ -140,6 +142,10 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.onClose = onClose
     this.device.on('error', this.handleError)
     this.device.on('data', this.handleData)
+
+    // initialize event rate tracking
+    this.eventRateInterval = setInterval(this.handleEventRateMeasurement, 1000)
+    this.eventsSinceLastUpdate = 0
   }
 
   private handleError = (e: Error) => {
@@ -148,6 +154,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   }
 
   private handleData = (data: Buffer) => {
+    this.eventsSinceLastUpdate++
     const parsed = inputReportParser.parse(data)
 
     if (parsed.extraDataType === INPUT_REPORT_TYPE_SENSOR_VALUES) {
@@ -159,6 +166,11 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     }
   }
 
+  private handleEventRateMeasurement = () => {
+    this.emit('eventRate', this.eventsSinceLastUpdate)
+    this.eventsSinceLastUpdate = 0
+  }
+
   public setConfiguration() {
     /* todo */
   }
@@ -166,6 +178,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   close() {
     this.onClose()
     this.device.close()
+    clearInterval(this.eventRateInterval)
     this.emit('disconnect')
   }
 }

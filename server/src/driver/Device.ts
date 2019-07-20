@@ -8,6 +8,7 @@ export interface DeviceInputData {
 
 export interface DeviceEvents {
   inputData: DeviceInputData
+  eventRate: number
   disconnect: void
 }
 
