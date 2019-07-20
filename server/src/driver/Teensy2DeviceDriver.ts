@@ -71,6 +71,20 @@ const inputReportParser = new Parser()
     }
   })
 
+const createOutputReport = (data: number[]): number[] => {
+  // TODO: automatically define 30 or do some other measure. Windows is happy
+  // whether we send bytes of the full report length, but linux seems not to be.
+  const array = new Array(30).fill(0)
+  array[0] = OUTPUT_REPORT_ID
+  array[1] = OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG
+
+  for (let i = 0; i < data.length; i++) {
+    array[i + 1] = data[0]
+  }
+
+  return array
+}
+
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
   private onClose: () => void
@@ -89,7 +103,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
     try {
       // write a configuration read request
-      hidDevice.write([OUTPUT_REPORT_ID, OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG])
+      hidDevice.write(createOutputReport([OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG]))
 
       // try to read configuration. 100 attempts should be plenty.
       // TODO: this needs some kind of timeout, nothing guarantees there will even be 100 reports
