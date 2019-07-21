@@ -2,15 +2,13 @@
 #include <string.h>
 
 #include "Config/DancePadConfig.h"
+#include "ConfigStore.h"
 #include "Pad.h"
 #include "ADC.h"
 
 #define MIN(a,b) ((a) < (b) ? a : b)
 
-PadConfiguration PAD_CONF = {
-    .sensorThresholds = { [0 ... SENSOR_COUNT - 1] = 400 },
-    .releaseMultiplier = 0.9
-};
+PadConfiguration PAD_CONF;
 
 PadState PAD_STATE = { 
     .sensorValues = { [0 ... SENSOR_COUNT - 1] = 0 },
@@ -31,12 +29,14 @@ void Pad_UpdateInternalConfiguration(void) {
 
 void Pad_Initialize(void) {
     ADC_Init();
+    ConfigStore_LoadConfiguration(&PAD_CONF);
     Pad_UpdateInternalConfiguration();
 }
 
 void Pad_UpdateConfiguration(const PadConfiguration* padConfiguration) {
     memcpy(&PAD_CONF, padConfiguration, sizeof (PadConfiguration));
     Pad_UpdateInternalConfiguration();
+    ConfigStore_StoreConfiguration(&PAD_CONF);
 }
 
 void Pad_UpdateState(void) {
