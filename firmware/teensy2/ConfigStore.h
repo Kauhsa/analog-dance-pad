@@ -1,5 +1,3 @@
-
-
 #ifndef _CONFIGSTORE_H_
 #define _CONFIGSTORE_H_
     #include "Pad.h"

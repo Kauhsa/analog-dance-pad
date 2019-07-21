@@ -17,6 +17,7 @@ PadState PAD_STATE = {
 
 typedef struct {
     uint16_t sensorReleaseThresholds[SENSOR_COUNT];
+    int8_t buttonToSensorMap[BUTTON_COUNT][SENSOR_COUNT + 1];
 } InternalPadConfiguration;
 
 InternalPadConfiguration INTERNAL_PAD_CONF;
@@ -24,6 +25,22 @@ InternalPadConfiguration INTERNAL_PAD_CONF;
 void Pad_UpdateInternalConfiguration(void) {
     for (int i = 0; i < SENSOR_COUNT; i++) {
         INTERNAL_PAD_CONF.sensorReleaseThresholds[i] = PAD_CONF.sensorThresholds[i] * PAD_CONF.releaseMultiplier;
+    }
+
+    // Precalculate array for mapping buttons to sensors.
+    // For every button, there is an array of sensor indices. when there are no more buttons assigned to that sensor,
+    // the value is -1.
+    for (int buttonIndex = 0; buttonIndex < BUTTON_COUNT; buttonIndex++) {
+        int mapIndex = 0;
+
+        for (int sensorIndex = 0; sensorIndex < SENSOR_COUNT; sensorIndex++) {
+            if (PAD_CONF.sensorToButtonMapping[sensorIndex] == buttonIndex) {
+                INTERNAL_PAD_CONF.buttonToSensorMap[buttonIndex][mapIndex++] = sensorIndex;
+            }
+        }
+
+        // mark -1 to end
+        INTERNAL_PAD_CONF.buttonToSensorMap[buttonIndex][mapIndex] = -1;
     }
 }
 
@@ -52,10 +69,35 @@ void Pad_UpdateState(void) {
         PAD_STATE.sensorValues[i] = (PAD_STATE.sensorValues[i] + newValues[i]) / 2;
     }
 
-    // TODO: No special button to sensor mapping for now. "Extra" sensors are ignored.
-    for (int i = 0; i < MIN(BUTTON_COUNT, SENSOR_COUNT); i++) {
-        PAD_STATE.buttonsPressed[i] = PAD_STATE.buttonsPressed[i]
-            ? PAD_STATE.sensorValues[i] > INTERNAL_PAD_CONF.sensorReleaseThresholds[i]
-            : PAD_STATE.sensorValues[i] > PAD_CONF.sensorThresholds[i];
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        bool newButtonPressedState = false;
+
+        for (int j = 0; j < SENSOR_COUNT; j++) {
+            int8_t sensor = INTERNAL_PAD_CONF.buttonToSensorMap[i][j];
+            
+            if (sensor == -1) {
+                break;
+            }
+
+            if (sensor < 0 || sensor > SENSOR_COUNT) {
+                break;
+            }
+
+            uint16_t sensorVal = PAD_STATE.sensorValues[sensor];
+
+            if (PAD_STATE.buttonsPressed[i]) {
+                if (sensorVal > INTERNAL_PAD_CONF.sensorReleaseThresholds[sensor]) {
+                    newButtonPressedState = true;
+                    break;
+                }
+            } else {
+                if (sensorVal > PAD_CONF.sensorThresholds[sensor]) {
+                    newButtonPressedState = true;
+                    break;
+                }
+            }
+        }
+
+        PAD_STATE.buttonsPressed[i] = newButtonPressedState;
     }
 }

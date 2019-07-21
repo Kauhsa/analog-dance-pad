@@ -56,17 +56,18 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
       // write a configuration read request
       hidDevice.write(outputReportWriter.requestForConfiguration())
 
-      // try to read configuration. 100 attempts should be plenty.
+      // try to read configuration. 10 attempts should be plenty.
       // TODO: this needs some kind of timeout, nothing guarantees there will even be 100 reports
       // to read.
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         const data = await promisifiedHIDRead(hidDevice)
         const parsedReport = parseInputReport(data)
 
         if (parsedReport.extraData.type === InputReportExtraDataType.CURRENT_CONFIGURATION) {
           const configuration: DeviceConfiguration = {
             sensorThresholds: parsedReport.extraData.sensorThresholds,
-            releaseThreshold: parsedReport.extraData.releaseThreshold
+            releaseThreshold: parsedReport.extraData.releaseThreshold,
+            sensorToButtonMapping: parsedReport.extraData.sensorToButtonMapping
           }
           return new Teensy2Device(devicePath, configuration, hidDevice, onClose)
         }

@@ -9,7 +9,7 @@ export const createOutputReportWriter = (buttonCount: number, sensorCount: numbe
   const createOutputReport = (type: number, reportContent?: Buffer): number[] => {
     // TODO: automatically create report of correct size. for windows, this doesn't seem to matter,
     // but to linux it does. maybe parse report descriptor for this?
-    const buffer = Buffer.alloc(30)
+    const buffer = Buffer.alloc(42)
     buffer.writeUInt8(OUTPUT_REPORT_ID, 0)
     buffer.writeUInt8(type, 1)
 
@@ -25,8 +25,11 @@ export const createOutputReportWriter = (buttonCount: number, sensorCount: numbe
     requestForConfiguration: () => createOutputReport(OUTPUT_REPORT_TYPE_REQUEST_FOR_CONFIG),
 
     setNewConfiguration: (conf: DeviceConfiguration) => {
-      // 2 bytes for every sensor (they're uint16), 4 bytes for request threshold (float)
-      const buffer = Buffer.alloc(2 * sensorCount + 4)
+      // size is as follows:
+      // - 2 bytes for every sensor threshold (they're uint16)
+      // - 4 bytes for request threshold (float)
+      // - 1 byte for sensor to button mapping (int8)
+      const buffer = Buffer.alloc(2 * sensorCount + 4 + sensorCount)
       let pos = 0
 
       // sensor thresholds
@@ -37,6 +40,13 @@ export const createOutputReportWriter = (buttonCount: number, sensorCount: numbe
 
       // release threshold
       buffer.writeFloatLE(conf.releaseThreshold, pos)
+      pos += 4
+
+      // sensor to button mapping
+      for (let i = 0; i < sensorCount; i++) {
+        buffer.writeInt8(conf.sensorToButtonMapping[i], pos)
+        pos += 1
+      }
 
       return createOutputReport(OUTPUT_REPORT_TYPE_SET_NEW_CONFIGURATION, buffer)
     }

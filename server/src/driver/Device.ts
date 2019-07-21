@@ -16,6 +16,7 @@ export interface DeviceEvents {
 export interface DeviceConfiguration {
   sensorThresholds: number[]
   releaseThreshold: number
+  sensorToButtonMapping: number[]
 }
 
 // this is information from device that cannot be changed

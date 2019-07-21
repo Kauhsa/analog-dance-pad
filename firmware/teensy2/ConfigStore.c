@@ -8,7 +8,8 @@
 #include "ConfigStore.h"
 
 // just some random bytes to figure out what we have in eeprom
-static uint8_t magicBytes[5] = {9, 74, 102, 48, 14};
+// change these to reset configuration!
+static uint8_t magicBytes[5] = {9, 74, 9, 48, 14};
 
 // where magic bytes (which indicate that a pad configuration is, in fact, stored) exist
 #define MAGIC_BYTES_ADDRESS ((void *) 0x00)
@@ -18,7 +19,8 @@ static uint8_t magicBytes[5] = {9, 74, 102, 48, 14};
 
 static PadConfiguration DEFAULT_PAD_CONFIGURATION = {
     .sensorThresholds = { [0 ... SENSOR_COUNT - 1] = 400 },
-    .releaseMultiplier = 0.9
+    .releaseMultiplier = 0.9,
+    .sensorToButtonMapping = { [0 ... SENSOR_COUNT - 1] = 1 }
 };
 
 void ConfigStore_LoadConfiguration(PadConfiguration* conf) {

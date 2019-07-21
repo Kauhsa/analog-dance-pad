@@ -7,6 +7,7 @@
     typedef struct {
         uint16_t sensorThresholds[SENSOR_COUNT];
         float releaseMultiplier;
+        int8_t sensorToButtonMapping[SENSOR_COUNT];
     } __attribute__((packed)) PadConfiguration;
 
     typedef struct {

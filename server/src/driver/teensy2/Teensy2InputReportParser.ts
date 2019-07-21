@@ -14,6 +14,7 @@ export type InputReportExtraData =
       type: InputReportExtraDataType.CURRENT_CONFIGURATION
       sensorThresholds: number[]
       releaseThreshold: number
+      sensorToButtonMapping: number[]
     }
 
 export interface InputReport {
@@ -45,6 +46,10 @@ export const createInputReportParser = (buttonCount: number, sensorCount: number
       length: sensorCount
     })
     .floatle('releaseThreshold')
+    .array('sensorToButtonMapping', {
+      type: 'int8',
+      length: sensorCount
+    })
 
   const inputReportParser = new Parser()
     .uint8('reportId', {
@@ -91,7 +96,8 @@ export const createInputReportParser = (buttonCount: number, sensorCount: number
         extraData: {
           type: InputReportExtraDataType.CURRENT_CONFIGURATION,
           sensorThresholds: parsed.extraData.sensorThresholds,
-          releaseThreshold: parsed.extraData.releaseThreshold
+          releaseThreshold: parsed.extraData.releaseThreshold,
+          sensorToButtonMapping: parsed.extraData.sensorToButtonMapping
         }
       }
     }
