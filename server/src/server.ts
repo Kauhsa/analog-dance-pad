@@ -124,6 +124,8 @@ export class Server {
       deviceId: device.id,
       eventRate: rate
     })
+
+    consola.info(`Event rate with device "${device.id}" is`, rate)
   }
 
   private handleSocketMessage = (
