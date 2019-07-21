@@ -15,7 +15,7 @@ static uint8_t magicBytes[5] = {9, 74, 9, 48, 14};
 #define MAGIC_BYTES_ADDRESS ((void *) 0x00)
 
 // where actual configration is stored
-#define CONFIGURATION_ADDRESS ((void *) (0xA0 + sizeof (magicBytes)))
+#define CONFIGURATION_ADDRESS ((void *) (MAGIC_BYTES_ADDRESS + sizeof (magicBytes)))
 
 static PadConfiguration DEFAULT_PAD_CONFIGURATION = {
     .sensorThresholds = { [0 ... SENSOR_COUNT - 1] = 400 },
