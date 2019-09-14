@@ -3,6 +3,10 @@
     {
       "directory": "./server",
       "changeProcessCWD": true
+    },
+    {
+      "directory": "./client",
+      "changeProcessCWD": true
     }
   ],
   "eslint.validate": [
@@ -10,6 +14,10 @@
       "language": "typescript",
       "autoFix": true
     },
+    {
+      "language": "typescriptreact",
+      "autoFix": true
+    }
   ],
   "C_Cpp.default.cStandard": "c11"
 }

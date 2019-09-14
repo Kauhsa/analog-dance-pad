@@ -1,0 +1,55 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@types/chroma-js": "^1.4.3",
+    "@types/jest": "24.0.18",
+    "@types/lodash": "^4.14.144",
+    "@types/lodash-es": "^4.17.3",
+    "@types/node": "12.7.12",
+    "@types/react": "16.9.5",
+    "@types/react-dom": "16.9.1",
+    "@types/styled-components": "^4.1.19",
+    "chroma-js": "^2.0.6",
+    "lodash-es": "^4.17.15",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2",
+    "react-helmet-async": "^1.0.3",
+    "react-scripts": "3.2.0",
+    "react-spring": "^8.0.27",
+    "react-use-gesture": "^6.0.9",
+    "sanitize.css": "^11.0.0",
+    "styled-components": "^5.0.0-beta.8",
+    "typescript": "3.6.4"
+  },
+  "scripts": {
+    "start": "TSC_COMPILE_ON_ERROR=true react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "eslint src/**.ts src/**.tsx"
+  },
+  "eslintConfig": {},
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.3.3",
+    "@typescript-eslint/parser": "^2.3.3",
+    "eslint": "^6.5.1",
+    "eslint-config-prettier": "^6.4.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-react": "^7.16.0",
+    "prettier": "^1.18.2"
+  }
+}
