@@ -4,8 +4,13 @@ import consola from 'consola'
 
 import { DeviceDriver, DeviceDriverEvents } from '../Driver'
 import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from '../Device'
-import { createInputReportParser, InputReportExtraDataType } from './Teensy2InputReportParser'
-import { createOutputReportWriter } from './Teensy2OutputReportWriter'
+import {
+  createInputReportParser,
+  createOutputReportWriter,
+  ReportID,
+  CONFIGURATION_REPORT_SIZE,
+  createConfigurationReportParser
+} from './Teensy2Reports'
 import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
 
 const VENDOR_ID = 0x03eb
@@ -16,22 +21,8 @@ const SENSOR_COUNT = 12
 const BUTTON_COUNT = 16
 
 const parseInputReport = createInputReportParser(BUTTON_COUNT, SENSOR_COUNT)
+const parseConfigurationReport = createConfigurationReportParser(BUTTON_COUNT, SENSOR_COUNT)
 const outputReportWriter = createOutputReportWriter(BUTTON_COUNT, SENSOR_COUNT)
-
-const promisifiedHIDRead = (device: HID.HID): Promise<Buffer> =>
-  new Promise((resolve, reject) => {
-    try {
-      device.read((err, data) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve((data as unknown) as Buffer)
-        }
-      })
-    } catch (e) {
-      reject(e)
-    }
-  })
 
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
@@ -53,29 +44,19 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     const hidDevice = new HID.HID(devicePath)
 
     try {
-      // write a configuration read request
-      hidDevice.write(outputReportWriter.requestForConfiguration())
-
-      // try to read configuration. 10 attempts should be plenty.
-      // TODO: this needs some kind of timeout, nothing guarantees there will even be 100 reports
-      // to read.
-      for (let i = 0; i < 10; i++) {
-        const data = await promisifiedHIDRead(hidDevice)
-        const parsedReport = parseInputReport(data)
-
-        if (parsedReport.extraData.type === InputReportExtraDataType.CURRENT_CONFIGURATION) {
-          const configuration: DeviceConfiguration = {
-            sensorThresholds: parsedReport.extraData.sensorThresholds,
-            releaseThreshold: parsedReport.extraData.releaseThreshold,
-            sensorToButtonMapping: parsedReport.extraData.sensorToButtonMapping
-          }
-          return new Teensy2Device(devicePath, configuration, hidDevice, onClose)
-        }
-      }
-
-      throw new Error(
-        `Found a compatible HID device in ${devicePath}, but it didn't return configuration upon asking`
+      const data = hidDevice.getFeatureReport(
+        ReportID.CURRENT_CONFIGURATION,
+        CONFIGURATION_REPORT_SIZE
       )
+
+      const parsedReport = parseConfigurationReport(Buffer.from(data))
+
+      const configuration: DeviceConfiguration = {
+        sensorThresholds: parsedReport.sensorThresholds,
+        releaseThreshold: parsedReport.releaseThreshold,
+        sensorToButtonMapping: parsedReport.sensorToButtonMapping
+      }
+      return new Teensy2Device(devicePath, configuration, hidDevice, onClose)
     } catch (e) {
       hidDevice.close()
       throw e
@@ -111,12 +92,10 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.eventsSinceLastUpdate++
     const inputReport = parseInputReport(data)
 
-    if (inputReport.extraData.type === InputReportExtraDataType.SENSOR_VALUES) {
-      this.emit('inputData', {
-        sensors: inputReport.extraData.sensorValues,
-        buttons: inputReport.buttons
-      })
-    }
+    this.emit('inputData', {
+      buttons: inputReport.buttons,
+      sensors: inputReport.sensorValues
+    })
   }
 
   private handleEventRateMeasurement = () => {
@@ -125,7 +104,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   }
 
   public setConfiguration(configuration: DeviceConfiguration) {
-    this.device.write(outputReportWriter.setNewConfiguration(configuration))
+    this.device.sendFeatureReport(outputReportWriter.setNewConfiguration(configuration))
   }
 
   close() {

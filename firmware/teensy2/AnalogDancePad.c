@@ -141,9 +141,16 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
                                          void* ReportData,
                                          uint16_t* const ReportSize)
 {
-    Communication_ProcessInputReportRequest(ReportData);
-    *ReportID = 1;
-    *ReportSize = sizeof (InputHIDReport);
+    if (*ReportID == 0) {
+        // no report id requested - write button and sensor data
+        Communication_WriteInputHIDReport(ReportData);
+        *ReportID = INPUT_REPORT_ID;
+        *ReportSize = sizeof (InputHIDReport);
+    } else if (*ReportID == CONFIGURATION_REPORT_ID) {
+        Communication_WriteConfigurationHIDReport(ReportData);
+        *ReportSize = sizeof (PadConfigurationFeatureHIDReport);
+    }
+    
     return true;
 }
 
@@ -161,7 +168,7 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const void* ReportData,
                                           const uint16_t ReportSize)
 {
-    if (ReportID == 2 && ReportSize == sizeof (OutputHIDReport)) {
-        Communication_ProcessOutputReport(ReportData);
+    if (ReportID == CONFIGURATION_REPORT_ID && ReportSize == sizeof (PadConfigurationFeatureHIDReport)) {
+        Communication_ReadConfigurationHIDReport(ReportData);
     }
 }

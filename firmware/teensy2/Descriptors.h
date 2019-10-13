@@ -76,6 +76,10 @@
             STRING_ID_Product      = 2, /**< Product string ID */
         };
 
+        
+        #define INPUT_REPORT_ID 0x01
+        #define CONFIGURATION_REPORT_ID 0x02
+
     /* Macros: */
         /** Endpoint address of the Generic HID reporting IN endpoint. */
         #define GENERIC_IN_EPADDR         (ENDPOINT_DIR_IN | 1)
