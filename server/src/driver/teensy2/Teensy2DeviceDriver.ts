@@ -7,8 +7,8 @@ import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from '../
 import { ReportManager, ReportID } from './Teensy2Reports'
 import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
 
-const VENDOR_ID = 0x03eb
-const PRODUCT_ID = 0x204f
+export const VENDOR_ID = 0x03eb
+export const PRODUCT_ID = 0x204f
 
 // in future version, I'd like to device to tell this information
 const SENSOR_COUNT = 12

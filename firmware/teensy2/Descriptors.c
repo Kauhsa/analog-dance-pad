@@ -51,7 +51,6 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
     HID_RI_USAGE(8, 0x04),
     HID_RI_COLLECTION(8, 0x01),
         HID_RI_REPORT_ID(8, INPUT_REPORT_ID),
-
         HID_RI_USAGE_PAGE(8, 0x09),
         HID_RI_USAGE_MINIMUM(8, 0x01),
         HID_RI_USAGE_MAXIMUM(8, BUTTON_COUNT),
@@ -60,9 +59,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
         HID_RI_REPORT_SIZE(8, 0x01),
         HID_RI_REPORT_COUNT(8, BUTTON_COUNT),
         HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
-        
         // TODO: padding here if BUTTON_COUNT not divisible by 8
-
         HID_RI_USAGE_PAGE(16, 0xFF00), // vendor usage page
         HID_RI_USAGE(8, 0x01),
         HID_RI_COLLECTION(8, 0x00),
@@ -85,6 +82,12 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
             HID_RI_REPORT_COUNT(8, sizeof (PadConfigurationFeatureHIDReport)),
             HID_RI_FEATURE(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
         HID_RI_END_COLLECTION(0),
+
+        // how this should be defined exactly?
+        HID_RI_REPORT_ID(8, RESET_REPORT_ID),
+        HID_RI_USAGE_PAGE(16, 0xFF00), // vendor usage page
+        HID_RI_USAGE(8, 0x02),
+        HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
     HID_RI_END_COLLECTION(0)
 };
 

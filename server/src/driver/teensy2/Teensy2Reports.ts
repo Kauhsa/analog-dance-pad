@@ -2,7 +2,8 @@ import { Parser } from 'binary-parser'
 
 export enum ReportID {
   SENSOR_VALUES = 0x01,
-  CURRENT_CONFIGURATION = 0x02
+  CURRENT_CONFIGURATION = 0x02,
+  RESET = 0x03
 }
 
 export interface InputReport {

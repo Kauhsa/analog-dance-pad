@@ -38,7 +38,8 @@
     "lint": "eslint src/**/*.ts --max-warnings=0",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "start": "nodemon --transpile-only src/index.ts"
+    "start": "nodemon --transpile-only src/index.ts",
+    "reset-teensy": "ts-node src/driver/teensy2/util/Teensy2Reset.ts"
   },
   "author": "",
   "license": "ISC"

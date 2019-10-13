@@ -40,6 +40,7 @@
 #include "Communication.h"
 #include "Descriptors.h"
 #include "Pad.h"
+#include "Reset.h"
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
@@ -170,5 +171,7 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
 {
     if (ReportID == CONFIGURATION_REPORT_ID && ReportSize == sizeof (PadConfigurationFeatureHIDReport)) {
         Communication_ReadConfigurationHIDReport(ReportData);
+    } else if (ReportID == RESET_REPORT_ID) {
+        Reset_JumpToBootloader();
     }
 }
