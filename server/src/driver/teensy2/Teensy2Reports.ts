@@ -55,7 +55,7 @@ export class ReportManager {
   private formatButtons = (data: number) => {
     const bitArray = new Array(this.buttonCount)
 
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < this.buttonCount; i++) {
       bitArray[i] = (data >> i) % 2 != 0
     }
 
