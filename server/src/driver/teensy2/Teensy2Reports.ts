@@ -16,16 +16,43 @@ export interface ConfigurationReport {
   sensorToButtonMapping: number[]
 }
 
-// TODO: shouldn't be needed eventually
-// automatically create report of correct size. for windows, this doesn't seem to matter,
-// but to linux it does. maybe parse report descriptor for this?
-export const CONFIGURATION_REPORT_SIZE = 41
+export class ReportManager {
+  private buttonCount: number
+  private sensorCount: number
+  private inputReportParser: Parser<any>
+  private configurationReportParser: Parser<any>
 
-// report parsers
+  constructor(settings: { buttonCount: number; sensorCount: number }) {
+    this.buttonCount = settings.buttonCount
+    this.sensorCount = settings.sensorCount
 
-export const createInputReportParser = (buttonCount: number, sensorCount: number) => {
-  const formatButtons = (data: number) => {
-    const bitArray = new Array(buttonCount)
+    this.inputReportParser = new Parser()
+      .uint8('reportId', {
+        assert: ReportID.SENSOR_VALUES
+      })
+      .uint16le('buttonBits')
+      .array('sensorValues', {
+        type: 'uint16le',
+        length: settings.sensorCount
+      })
+
+    this.configurationReportParser = new Parser()
+      .uint8('reportId', {
+        assert: ReportID.CURRENT_CONFIGURATION
+      })
+      .array('sensorThresholds', {
+        type: 'uint16le',
+        length: this.sensorCount
+      })
+      .floatle('releaseThreshold')
+      .array('sensorToButtonMapping', {
+        type: 'int8',
+        length: this.sensorCount
+      })
+  }
+
+  private formatButtons = (data: number) => {
+    const bitArray = new Array(this.buttonCount)
 
     for (let i = 0; i < 16; i++) {
       bitArray[i] = (data >> i) % 2 != 0
@@ -34,91 +61,52 @@ export const createInputReportParser = (buttonCount: number, sensorCount: number
     return bitArray
   }
 
-  const inputReportParser = new Parser()
-    .uint8('reportId', {
-      assert: ReportID.SENSOR_VALUES
-    })
-    .uint16le('buttonBits')
-    .array('sensorValues', {
-      type: 'uint16le',
-      length: sensorCount
-    })
-
-  return (data: Buffer): InputReport => {
-    const parsed = inputReportParser.parse(data)
+  parseInputReport(data: Buffer): InputReport {
+    const parsed = this.inputReportParser.parse(data)
 
     return {
-      buttons: formatButtons(parsed.buttonBits),
+      buttons: this.formatButtons(parsed.buttonBits),
       sensorValues: parsed.sensorValues
     }
   }
-}
 
-export const createConfigurationReportParser = (buttonCount: number, sensorCount: number) => {
-  const parser = new Parser()
-    .uint8('reportId', {
-      assert: ReportID.CURRENT_CONFIGURATION
-    })
-    .array('sensorThresholds', {
-      type: 'uint16le',
-      length: sensorCount
-    })
-    .floatle('releaseThreshold')
-    .array('sensorToButtonMapping', {
-      type: 'int8',
-      length: sensorCount
-    })
-
-  return (data: Buffer): ConfigurationReport => {
-    return parser.parse(data)
-  }
-}
-
-// report writers
-
-const createOutputReport = (
-  reportId: number,
-  reportSize: number,
-  reportContent?: Buffer
-): number[] => {
-  const buffer = Buffer.alloc(reportSize + 1)
-  buffer.writeUInt8(reportId, 0)
-
-  if (reportContent) {
-    reportContent.copy(buffer, 1)
+  parseConfigurationReport(data: Buffer): ConfigurationReport {
+    return this.configurationReportParser.parse(data)
   }
 
-  // node-hid wants arrays, so...
-  return [...buffer]
-}
+  getConfigurationReportSize = () => {
+    // size is as follows:
+    // - 1 byte for report id
+    // - 2 bytes for every sensor threshold (they're uint16)
+    // - 4 bytes for request threshold (float)
+    // - 1 byte for sensor to button mapping (int8)
+    return 2 * this.sensorCount + 4 + this.sensorCount + 1
+  }
 
-export const createOutputReportWriter = (buttonCount: number, sensorCount: number) => {
-  return {
-    setNewConfiguration: (conf: ConfigurationReport) => {
-      // size is as follows:
-      // - 2 bytes for every sensor threshold (they're uint16)
-      // - 4 bytes for request threshold (float)
-      // - 1 byte for sensor to button mapping (int8)
-      const buffer = Buffer.alloc(2 * sensorCount + 4 + sensorCount)
-      let pos = 0
+  createConfigurationReport(conf: ConfigurationReport): number[] {
+    const buffer = Buffer.alloc(this.getConfigurationReportSize())
+    let pos = 0
 
-      // sensor thresholds
-      for (let i = 0; i < sensorCount; i++) {
-        buffer.writeUInt16LE(conf.sensorThresholds[i], pos)
-        pos += 2
-      }
+    // report ID
+    buffer.writeUInt8(ReportID.CURRENT_CONFIGURATION, 0)
+    pos += 1
 
-      // release threshold
-      buffer.writeFloatLE(conf.releaseThreshold, pos)
-      pos += 4
-
-      // sensor to button mapping
-      for (let i = 0; i < sensorCount; i++) {
-        buffer.writeInt8(conf.sensorToButtonMapping[i], pos)
-        pos += 1
-      }
-
-      return createOutputReport(ReportID.CURRENT_CONFIGURATION, buffer.length, buffer)
+    // sensor thresholds
+    for (let i = 0; i < this.sensorCount; i++) {
+      buffer.writeUInt16LE(conf.sensorThresholds[i], pos)
+      pos += 2
     }
+
+    // release threshold
+    buffer.writeFloatLE(conf.releaseThreshold, pos)
+    pos += 4
+
+    // sensor to button mapping
+    for (let i = 0; i < this.sensorCount; i++) {
+      buffer.writeInt8(conf.sensorToButtonMapping[i], pos)
+      pos += 1
+    }
+
+    return [...buffer]
   }
 }

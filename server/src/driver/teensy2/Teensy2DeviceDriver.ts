@@ -4,13 +4,7 @@ import consola from 'consola'
 
 import { DeviceDriver, DeviceDriverEvents } from '../Driver'
 import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from '../Device'
-import {
-  createInputReportParser,
-  createOutputReportWriter,
-  ReportID,
-  CONFIGURATION_REPORT_SIZE,
-  createConfigurationReportParser
-} from './Teensy2Reports'
+import { ReportManager, ReportID } from './Teensy2Reports'
 import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
 
 const VENDOR_ID = 0x03eb
@@ -20,9 +14,7 @@ const PRODUCT_ID = 0x204f
 const SENSOR_COUNT = 12
 const BUTTON_COUNT = 16
 
-const parseInputReport = createInputReportParser(BUTTON_COUNT, SENSOR_COUNT)
-const parseConfigurationReport = createConfigurationReportParser(BUTTON_COUNT, SENSOR_COUNT)
-const outputReportWriter = createOutputReportWriter(BUTTON_COUNT, SENSOR_COUNT)
+const reportManager = new ReportManager({ buttonCount: BUTTON_COUNT, sensorCount: SENSOR_COUNT })
 
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
@@ -46,10 +38,10 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     try {
       const data = hidDevice.getFeatureReport(
         ReportID.CURRENT_CONFIGURATION,
-        CONFIGURATION_REPORT_SIZE
+        reportManager.getConfigurationReportSize()
       )
 
-      const parsedReport = parseConfigurationReport(Buffer.from(data))
+      const parsedReport = reportManager.parseConfigurationReport(Buffer.from(data))
 
       const configuration: DeviceConfiguration = {
         sensorThresholds: parsedReport.sensorThresholds,
@@ -90,7 +82,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
   private handleData = (data: Buffer) => {
     this.eventsSinceLastUpdate++
-    const inputReport = parseInputReport(data)
+    const inputReport = reportManager.parseInputReport(data)
 
     this.emit('inputData', {
       buttons: inputReport.buttons,
@@ -104,7 +96,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   }
 
   public setConfiguration(configuration: DeviceConfiguration) {
-    this.device.sendFeatureReport(outputReportWriter.setNewConfiguration(configuration))
+    this.device.sendFeatureReport(reportManager.createConfigurationReport(configuration))
   }
 
   close() {
