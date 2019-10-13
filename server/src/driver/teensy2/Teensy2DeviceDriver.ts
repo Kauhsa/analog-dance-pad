@@ -97,6 +97,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
   public setConfiguration(configuration: DeviceConfiguration) {
     this.device.sendFeatureReport(reportManager.createConfigurationReport(configuration))
+    this.configuration = configuration
   }
 
   close() {
