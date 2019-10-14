@@ -18,6 +18,7 @@
     void Pad_Initialize(void);
     void Pad_UpdateState(void);
     void Pad_UpdateConfiguration(const PadConfiguration* padConfiguration);
+    void Pad_SaveConfiguration(void);
 
     extern PadConfiguration PAD_CONF;
     extern PadState PAD_STATE;

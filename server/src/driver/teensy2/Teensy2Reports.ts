@@ -2,8 +2,9 @@ import { Parser } from 'binary-parser'
 
 export enum ReportID {
   SENSOR_VALUES = 0x01,
-  CURRENT_CONFIGURATION = 0x02,
-  RESET = 0x03
+  CONFIGURATION = 0x02,
+  RESET = 0x03,
+  SAVE_CONFIGURATION = 0x04
 }
 
 export interface InputReport {
@@ -39,7 +40,7 @@ export class ReportManager {
 
     this.configurationReportParser = new Parser()
       .uint8('reportId', {
-        assert: ReportID.CURRENT_CONFIGURATION
+        assert: ReportID.CONFIGURATION
       })
       .array('sensorThresholds', {
         type: 'uint16le',
@@ -89,7 +90,7 @@ export class ReportManager {
     let pos = 0
 
     // report ID
-    buffer.writeUInt8(ReportID.CURRENT_CONFIGURATION, 0)
+    buffer.writeUInt8(ReportID.CONFIGURATION, 0)
     pos += 1
 
     // sensor thresholds
@@ -109,5 +110,9 @@ export class ReportManager {
     }
 
     return [...buffer]
+  }
+
+  createSaveConfigurationReport(): number[] {
+    return [ReportID.SAVE_CONFIGURATION, 0x00]
   }
 }

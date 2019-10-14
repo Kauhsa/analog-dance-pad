@@ -37,7 +37,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
     try {
       const data = hidDevice.getFeatureReport(
-        ReportID.CURRENT_CONFIGURATION,
+        ReportID.CONFIGURATION,
         reportManager.getConfigurationReportSize()
       )
 
@@ -95,9 +95,13 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.eventsSinceLastUpdate = 0
   }
 
-  public setConfiguration(configuration: DeviceConfiguration) {
+  public updateConfiguration(configuration: DeviceConfiguration) {
     this.device.sendFeatureReport(reportManager.createConfigurationReport(configuration))
     this.configuration = configuration
+  }
+
+  public saveConfiguration() {
+    this.device.write(reportManager.createSaveConfigurationReport())
   }
 
   close() {

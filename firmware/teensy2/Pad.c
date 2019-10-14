@@ -53,6 +53,9 @@ void Pad_Initialize(void) {
 void Pad_UpdateConfiguration(const PadConfiguration* padConfiguration) {
     memcpy(&PAD_CONF, padConfiguration, sizeof (PadConfiguration));
     Pad_UpdateInternalConfiguration();
+}
+
+void Pad_SaveConfiguration(void) {
     ConfigStore_StoreConfiguration(&PAD_CONF);
 }
 

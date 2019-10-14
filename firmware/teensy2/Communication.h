@@ -28,6 +28,4 @@
     } __attribute__((packed)) PadConfigurationFeatureHIDReport;
 
     void Communication_WriteInputHIDReport(InputHIDReport* report);
-    void Communication_WriteConfigurationHIDReport(PadConfigurationFeatureHIDReport* report);
-    void Communication_ReadConfigurationHIDReport(const PadConfigurationFeatureHIDReport* report);
 #endif

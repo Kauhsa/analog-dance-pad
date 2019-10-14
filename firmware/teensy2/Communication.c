@@ -19,11 +19,3 @@ void Communication_WriteInputHIDReport(InputHIDReport* report) {
         report->sensorValues[i] = PAD_STATE.sensorValues[i];
     }
 }
-
-void Communication_WriteConfigurationHIDReport(PadConfigurationFeatureHIDReport* report) {
-    report->configuration = PAD_CONF;
-}
-
-void Communication_ReadConfigurationHIDReport(const PadConfigurationFeatureHIDReport* report) {
-    Pad_UpdateConfiguration(&report->configuration);
-}

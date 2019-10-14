@@ -19,6 +19,7 @@ type InputMessage =
     }
   | { type: 'unsubscribeFromDevice'; deviceId: string }
   | { type: 'updateConfiguration'; deviceId: string; configuration: DeviceConfiguration }
+  | { type: 'saveConfiguration'; deviceId: string }
 
 type OutputMessage =
   | {
@@ -136,25 +137,36 @@ export class Server {
     try {
       const msg: InputMessage = JSON.parse(data.toString('utf-8'))
 
-      if (msg.type === 'subscribeToDevice') {
-        ws.subscribedDevices.add(msg.deviceId)
-        consola.info(
-          `Websocket connection from "${remoteAddress}" subscribed to device id "${msg.deviceId}"`
-        )
-      } else if (msg.type === 'unsubscribeFromDevice') {
-        ws.subscribedDevices.delete(msg.deviceId)
-        consola.info(
-          `Websocket connection from "${remoteAddress}" unsubscribed from device id "${msg.deviceId}`
-        )
-      } else if (msg.type === 'updateConfiguration') {
-        this.devices[msg.deviceId].setConfiguration(msg.configuration)
-        this.sendToAllClients(this.getDevicesUpdatedMessage())
-        consola.info(`Device id ${msg.deviceId} configuration updated`, msg.configuration)
-      } else {
-        consola.warn(
-          `Received websocket message from "${remoteAddress}" that was not understood`,
-          data
-        )
+      switch (msg.type) {
+        case 'subscribeToDevice':
+          ws.subscribedDevices.add(msg.deviceId)
+          consola.info(
+            `Websocket connection from "${remoteAddress}" subscribed to device id "${msg.deviceId}"`
+          )
+          break
+
+        case 'unsubscribeFromDevice':
+          ws.subscribedDevices.delete(msg.deviceId)
+          consola.info(
+            `Websocket connection from "${remoteAddress}" unsubscribed from device id "${msg.deviceId}`
+          )
+          break
+
+        case 'updateConfiguration':
+          this.devices[msg.deviceId].updateConfiguration(msg.configuration)
+          this.sendToAllClients(this.getDevicesUpdatedMessage())
+          consola.info(`Device id ${msg.deviceId} configuration updated`, msg.configuration)
+          break
+
+        case 'saveConfiguration':
+          this.devices[msg.deviceId].saveConfiguration()
+
+        default:
+          consola.warn(
+            `Received websocket message from "${remoteAddress}" that was not understood`,
+            data
+          )
+          break
       }
     } catch (e) {
       consola.error('Error while parsing websocket message:', e)

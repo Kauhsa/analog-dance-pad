@@ -148,7 +148,8 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
         *ReportID = INPUT_REPORT_ID;
         *ReportSize = sizeof (InputHIDReport);
     } else if (*ReportID == CONFIGURATION_REPORT_ID) {
-        Communication_WriteConfigurationHIDReport(ReportData);
+        PadConfigurationFeatureHIDReport* configurationHidReport = ReportData;
+        configurationHidReport->configuration = PAD_CONF;
         *ReportSize = sizeof (PadConfigurationFeatureHIDReport);
     }
     
@@ -170,8 +171,11 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const uint16_t ReportSize)
 {
     if (ReportID == CONFIGURATION_REPORT_ID && ReportSize == sizeof (PadConfigurationFeatureHIDReport)) {
-        Communication_ReadConfigurationHIDReport(ReportData);
+        const PadConfigurationFeatureHIDReport* configurationHidReport = ReportData;
+        Pad_UpdateConfiguration(&configurationHidReport->configuration);
     } else if (ReportID == RESET_REPORT_ID) {
         Reset_JumpToBootloader();
+    } else if (ReportID == SAVE_CONFIGURATION_REPORT_ID) {
+        Pad_SaveConfiguration();
     }
 }

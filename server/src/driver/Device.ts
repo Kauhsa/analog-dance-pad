@@ -29,6 +29,7 @@ export interface Device extends StrictEventEmitter<EventEmitter, DeviceEvents> {
   id: string
   properties: DeviceProperties
   configuration: DeviceConfiguration
-  setConfiguration: (conf: DeviceConfiguration) => void
+  updateConfiguration: (conf: DeviceConfiguration) => void
+  saveConfiguration: () => void
   close: () => void
 }
