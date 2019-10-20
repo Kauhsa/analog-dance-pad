@@ -90,7 +90,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
         HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
 
         // how this should be defined exactly?
-        HID_RI_REPORT_ID(8, SAVE_PAD_CONFIGURATION_REPORT_ID),
+        HID_RI_REPORT_ID(8, SAVE_CONFIGURATION_REPORT_ID),
         HID_RI_USAGE_PAGE(16, 0xFF00), // vendor usage page
         HID_RI_USAGE(8, 0x02),
         HID_RI_OUTPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
