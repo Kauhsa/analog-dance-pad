@@ -6,6 +6,7 @@ import { DeviceDriver, DeviceDriverEvents } from '../Driver'
 import { DeviceEvents, Device, DeviceConfiguration, DeviceProperties } from '../Device'
 import { ReportManager, ReportID } from './Teensy2Reports'
 import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
+import delay from '../../util/delay'
 
 export const VENDOR_ID = 0x03eb
 export const PRODUCT_ID = 0x204f
@@ -100,7 +101,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.eventsSinceLastUpdate = 0
   }
 
-  public updateConfiguration(configuration: DeviceConfiguration) {
+  public async updateConfiguration(configuration: DeviceConfiguration) {
     // set pad configuration in first report
     this.device.sendFeatureReport(
       reportManager.createConfigurationReport({
@@ -110,12 +111,16 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
       })
     )
 
+    // for whatever reason, sending two feature reports two soons crashes on linux half of the
+    // time (sigh). but we can avoid that...
+    await delay(5)
+
     // then, send name
     this.device.sendFeatureReport(reportManager.createNameReport({ name: configuration.name }))
     this.configuration = configuration
   }
 
-  public saveConfiguration() {
+  public async saveConfiguration() {
     this.device.write(reportManager.createSaveConfigurationReport())
   }
 

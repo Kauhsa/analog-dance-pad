@@ -123,14 +123,14 @@ const createServer = (params: Params) => {
       socket.leave(data.deviceId)
     })
 
-    socket.on('updateConfiguration', (data: UpdateConfigurationEvent) => {
-      devices[data.deviceId].updateConfiguration(data.configuration)
+    socket.on('updateConfiguration', async (data: UpdateConfigurationEvent) => {
+      await devices[data.deviceId].updateConfiguration(data.configuration)
       broadcastDevicesUpdated()
       consola.info(`Device id "${data.deviceId}" configuration updated`, data.configuration)
     })
 
-    socket.on('saveConfiguration', (data: SaveConfigurationEvent) => {
-      devices[data.deviceId].saveConfiguration()
+    socket.on('saveConfiguration', async (data: SaveConfigurationEvent) => {
+      await devices[data.deviceId].saveConfiguration()
     })
 
     socket.on('disconnect', () => {
