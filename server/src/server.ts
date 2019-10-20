@@ -1,5 +1,3 @@
-import { Router, Request } from 'express'
-import * as WebSocket from 'ws'
 import consola from 'consola'
 
 import { Device, DeviceInputData, DeviceConfiguration, DeviceProperties } from './driver/Device'
@@ -8,106 +6,84 @@ import { DeviceDriver } from './driver/Driver'
 const SECOND_AS_NS = BigInt(1e9)
 const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(60) // 60hz
 
-interface Settings {
+interface Params {
+  expressApplication: Express.Application
+  socketIOServer: SocketIO.Server
   deviceDrivers: DeviceDriver[]
 }
 
-type InputMessage =
-  | {
-      type: 'subscribeToDevice'
-      deviceId: string
-    }
-  | { type: 'unsubscribeFromDevice'; deviceId: string }
-  | { type: 'updateConfiguration'; deviceId: string; configuration: DeviceConfiguration }
-  | { type: 'saveConfiguration'; deviceId: string }
+// from server
 
-type OutputMessage =
-  | {
-      type: 'inputEvent'
-      deviceId: string
-      inputData: DeviceInputData
-    }
-  | {
-      type: 'devicesUpdated'
-      devices: Array<{
-        id: string
-        configuration: DeviceConfiguration
-        properties: DeviceProperties
-      }>
-    }
-  | {
-      type: 'eventRate'
-      deviceId: string
-      eventRate: number
-    }
-
-type ExtendedWebSocket = WebSocket & {
-  subscribedDevices: Set<string>
+type DevicesUpdatedEvent = {
+  devices: Array<{
+    id: string
+    configuration: DeviceConfiguration
+    properties: DeviceProperties
+  }>
 }
 
-export class Server {
-  settings: Settings
-  devices: Record<string, Device> = {}
-  webSockets: Set<ExtendedWebSocket>
-  lastInputEventSent: Record<string, bigint>
+type EventRateEvent = {
+  deviceId: string
+  eventRate: number
+}
 
-  constructor(settings: Settings) {
-    this.settings = settings
-    this.devices = {}
-    this.webSockets = new Set()
-    this.lastInputEventSent = {}
-  }
+// from client
 
-  private serializeMessage = (obj: OutputMessage) => JSON.stringify(obj)
+type UpdateConfigurationEvent = {
+  deviceId: string
+  configuration: DeviceConfiguration
+}
 
-  private sendToClient(ws: WebSocket, obj: OutputMessage) {
-    ws.send(this.serializeMessage(obj))
-  }
+type SubscribeToDeviceEvent = {
+  deviceId: string
+}
 
-  private sendToAllClients(obj: OutputMessage) {
-    const msg = this.serializeMessage(obj)
-    this.webSockets.forEach(ws => ws.send(msg))
-  }
+type UnsubscribeFromDeviceEvent = {
+  deviceId: string
+}
 
-  private sendToSubscribedDevices(device: Device, obj: OutputMessage) {
-    const msg = this.serializeMessage(obj)
+type SaveConfigurationEvent = {
+  deviceId: string
+}
 
-    for (const socket of this.webSockets) {
-      if (socket.subscribedDevices.has(device.id)) {
-        socket.send(msg)
-      }
-    }
-  }
+const createServer = (params: Params) => {
+  const lastInputEventSentByDevice: Record<string, bigint> = {}
+  const devices: Record<string, Device> = {}
 
-  private getDevicesUpdatedMessage = () => ({
-    type: 'devicesUpdated' as const,
-    devices: Object.values(this.devices).map(({ id, configuration, properties }) => ({
+  /* Handlers */
+
+  const getDevicesUpdatedEvent = (): DevicesUpdatedEvent => ({
+    devices: Object.values(devices).map(({ id, configuration, properties }) => ({
       id,
       configuration,
       properties
     }))
   })
 
-  private handleNewDevice = (device: Device) => {
-    this.devices[device.id] = device
-    device.on('disconnect', () => this.handleDisconnectDevice(device))
-    device.on('inputData', data => this.handleInputData(device, data))
-    device.on('eventRate', number => this.handleEventRate(device, number))
-    this.sendToAllClients(this.getDevicesUpdatedMessage())
+  const broadcastDevicesUpdated = () => {
+    params.socketIOServer.emit('devicesUpdated', getDevicesUpdatedEvent())
+  }
+
+  const handleNewDevice = (device: Device) => {
+    devices[device.id] = device
+    device.on('disconnect', () => handleDisconnectDevice(device))
+    device.on('inputData', data => handleInputData(device, data))
+    device.on('eventRate', number => handleEventRate(device, number))
+    broadcastDevicesUpdated()
     consola.info(`Connected to a new device id "${device.id}"`, {
       properties: device.properties,
       configuration: device.configuration
     })
   }
 
-  private handleDisconnectDevice = (device: Device) => {
-    delete this.devices[device.id]
-    this.sendToAllClients(this.getDevicesUpdatedMessage())
+  const handleDisconnectDevice = (device: Device) => {
+    delete devices[device.id]
+    broadcastDevicesUpdated()
     consola.info(`Disconnected from device id "${device.id}"`)
   }
 
-  private handleInputData = (device: Device, inputData: DeviceInputData) => {
-    const lastInputEventSent = this.lastInputEventSent[device.id]
+  const handleInputData = (device: Device, inputData: DeviceInputData) => {
+    const lastInputEventSent = lastInputEventSentByDevice[device.id]
     const now = process.hrtime.bigint()
 
     // send input events only at specified rate – not at every event
@@ -115,101 +91,58 @@ export class Server {
       return
     }
 
-    this.sendToSubscribedDevices(device, { type: 'inputEvent', deviceId: device.id, inputData })
-    this.lastInputEventSent[device.id] = now
+    params.socketIOServer.to(device.id).emit('inputEvent', { deviceId: device.id, inputData })
+    lastInputEventSentByDevice[device.id] = now
   }
 
-  private handleEventRate = (device: Device, rate: number) => {
-    this.sendToSubscribedDevices(device, {
-      type: 'eventRate',
-      deviceId: device.id,
-      eventRate: rate
+  const handleEventRate = (device: Device, rate: number) => {
+    params.socketIOServer.to(device.id).emit('eventRate', { deviceId: device.id, eventRate: rate })
+    consola.info(`Event rate with device "${device.id}" is ${rate}`)
+  }
+
+  /* Start server. */
+
+  params.deviceDrivers.forEach(dd => {
+    dd.on('newDevice', handleNewDevice)
+    dd.start()
+  })
+
+  params.socketIOServer.on('connection', socket => {
+    consola.info('New SocketIO connection from', socket.handshake.address)
+    socket.emit('devicesUpdated', getDevicesUpdatedEvent())
+
+    socket.on('subscribeToDevice', (data: SubscribeToDeviceEvent) => {
+      consola.info(`Socket "${socket.handshake.address}" subscribed to device "${data.deviceId}"`)
+      socket.join(data.deviceId)
     })
 
-    consola.info(`Event rate with device "${device.id}" is`, rate)
-  }
-
-  private handleSocketMessage = (
-    ws: ExtendedWebSocket,
-    remoteAddress: string | undefined,
-    data: WebSocket.Data
-  ) => {
-    try {
-      const msg: InputMessage = JSON.parse(data.toString('utf-8'))
-
-      switch (msg.type) {
-        case 'subscribeToDevice':
-          ws.subscribedDevices.add(msg.deviceId)
-          consola.info(
-            `Websocket connection from "${remoteAddress}" subscribed to device id "${msg.deviceId}"`
-          )
-          break
-
-        case 'unsubscribeFromDevice':
-          ws.subscribedDevices.delete(msg.deviceId)
-          consola.info(
-            `Websocket connection from "${remoteAddress}" unsubscribed from device id "${msg.deviceId}`
-          )
-          break
-
-        case 'updateConfiguration':
-          this.devices[msg.deviceId].updateConfiguration(msg.configuration)
-          this.sendToAllClients(this.getDevicesUpdatedMessage())
-          consola.info(`Device id ${msg.deviceId} configuration updated`, msg.configuration)
-          break
-
-        case 'saveConfiguration':
-          this.devices[msg.deviceId].saveConfiguration()
-
-        default:
-          consola.warn(
-            `Received websocket message from "${remoteAddress}" that was not understood`,
-            data
-          )
-          break
-      }
-    } catch (e) {
-      consola.error('Error while parsing websocket message:', e)
-    }
-  }
-
-  private handleNewSocket = (ws: WebSocket, req: Request) => {
-    const remoteAddress = req.connection.remoteAddress
-
-    const extendedSocket: ExtendedWebSocket = Object.assign(ws, {
-      subscribedDevices: new Set<string>()
+    socket.on('unsubsribeFromDevice', (data: UnsubscribeFromDeviceEvent) => {
+      consola.info(
+        `Socket "${socket.handshake.address}" unsubscribed from device "${data.deviceId}"`
+      )
+      socket.leave(data.deviceId)
     })
 
-    // add socket to websocket list
-    extendedSocket.on('message', data =>
-      this.handleSocketMessage(extendedSocket, remoteAddress, data)
-    )
-    extendedSocket.on('close', () => this.handleDisconnectSocket(extendedSocket, remoteAddress))
-    this.webSockets.add(extendedSocket)
-
-    // send initial server state to a new client
-    this.sendToClient(extendedSocket, this.getDevicesUpdatedMessage())
-
-    consola.info('New websocket connection from', remoteAddress)
-  }
-
-  private handleDisconnectSocket = (ws: ExtendedWebSocket, remoteAddress: string | undefined) => {
-    this.webSockets.delete(ws)
-    consola.info('Disconnected websocket connection from', remoteAddress)
-  }
-
-  start(): Router {
-    this.settings.deviceDrivers.forEach(dd => {
-      dd.on('newDevice', this.handleNewDevice)
-      dd.start()
+    socket.on('updateConfiguration', (data: UpdateConfigurationEvent) => {
+      devices[data.deviceId].updateConfiguration(data.configuration)
+      broadcastDevicesUpdated()
+      consola.info(`Device id "${data.deviceId}" configuration updated`, data.configuration)
     })
 
-    const router = Router()
-    router.ws('/socket', this.handleNewSocket)
-    return router
-  }
+    socket.on('saveConfiguration', (data: SaveConfigurationEvent) => {
+      devices[data.deviceId].saveConfiguration()
+    })
 
-  close() {
-    this.settings.deviceDrivers.forEach(dd => dd.close())
+    socket.on('disconnect', () => {
+      consola.info('Disconnected SocketIO from', socket.handshake.address)
+    })
+  })
+
+  /* Return function to close server resources. */
+
+  return () => {
+    params.deviceDrivers.forEach(dd => dd.close())
   }
 }
+
+export default createServer

@@ -1,25 +1,31 @@
 import cors from 'cors'
 import express from 'express'
-import expressWs, { Application } from 'express-ws'
+import { Server as HttpServer } from 'http'
+import SocketIO from 'socket.io'
 
 import { Teensy2DeviceDriver } from './driver/teensy2/Teensy2DeviceDriver'
-import { Server } from './server'
+import createServer from './server'
 import consola from 'consola'
 
 function start(port: number, host: string) {
-  // start API
-  const app = (express() as unknown) as Application
-  expressWs(app)
-  app.use(cors())
-  app.use(express.json())
+  const expressApplication = express()
+  const httpServer = new HttpServer(expressApplication)
+  const socketIOServer = SocketIO(httpServer)
+  expressApplication.use(cors())
+  expressApplication.use(express.json())
 
-  const server = new Server({ deviceDrivers: [new Teensy2DeviceDriver()] })
-  app.use('/api', server.start())
+  const closeServer = createServer({
+    expressApplication,
+    socketIOServer,
+    deviceDrivers: [new Teensy2DeviceDriver()]
+  })
 
-  app.listen(port, host, () => consola.info(`Application started, listening ${host}:${port}`))
+  httpServer.listen(port, host, () =>
+    consola.info(`Application started, listening ${host}:${port}`)
+  )
 
   process.on('SIGINT', () => {
-    server.close()
+    closeServer()
     process.exit(0)
   })
 }
