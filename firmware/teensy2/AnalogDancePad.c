@@ -188,7 +188,7 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
         Reset_JumpToBootloader();
     } else if (ReportID == SAVE_PAD_CONFIGURATION_REPORT_ID) {    
         ConfigStore_StoreConfiguration(&configuration);
-    } else if (ReportID == NAME_REPORT_ID) {
+    } else if (ReportID == NAME_REPORT_ID && ReportSize == sizeof (NameFeatureHIDReport)) {
         const NameFeatureHIDReport* nameHidReport = ReportData;
         memcpy(&configuration.nameAndSize, &nameHidReport->nameAndSize, sizeof (configuration.nameAndSize));
     }
