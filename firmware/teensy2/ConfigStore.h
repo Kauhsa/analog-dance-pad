@@ -2,6 +2,18 @@
 #define _CONFIGSTORE_H_
     #include "Pad.h"
 
-    void ConfigStore_LoadConfiguration(PadConfiguration* conf);
-    void ConfigStore_StoreConfiguration(const PadConfiguration* conf);
+    #define MAX_NAME_SIZE 50
+
+    typedef struct {
+        uint8_t size;
+        char name[MAX_NAME_SIZE];
+    } __attribute__((packed)) NameAndSize; 
+
+    typedef struct {
+        PadConfiguration padConfiguration;
+        NameAndSize nameAndSize;
+    } __attribute__((packed)) Configuration;
+
+    void ConfigStore_LoadConfiguration(Configuration* conf);
+    void ConfigStore_StoreConfiguration(const Configuration* conf);
 #endif

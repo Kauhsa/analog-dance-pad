@@ -35,12 +35,15 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+
 #include "Config/DancePadConfig.h"
 #include "AnalogDancePad.h"
 #include "Communication.h"
 #include "Descriptors.h"
 #include "Pad.h"
 #include "Reset.h"
+#include "ConfigStore.h"
 
 /** Buffer to hold the previously generated HID report, for comparison purposes inside the HID class driver. */
 static uint8_t PrevHIDReportBuffer[GENERIC_EPSIZE];
@@ -65,6 +68,8 @@ USB_ClassInfo_HID_Device_t Generic_HID_Interface =
             },
     };
 
+static Configuration configuration;
+
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
  */
@@ -72,7 +77,8 @@ int main(void)
 {
     SetupHardware();
     GlobalInterruptEnable();
-    Pad_Initialize();
+    ConfigStore_LoadConfiguration(&configuration);
+    Pad_Initialize(&configuration.padConfiguration);
 
     for (;;)
     {
@@ -147,10 +153,14 @@ bool CALLBACK_HID_Device_CreateHIDReport(USB_ClassInfo_HID_Device_t* const HIDIn
         Communication_WriteInputHIDReport(ReportData);
         *ReportID = INPUT_REPORT_ID;
         *ReportSize = sizeof (InputHIDReport);
-    } else if (*ReportID == CONFIGURATION_REPORT_ID) {
+    } else if (*ReportID == PAD_CONFIGURATION_REPORT_ID) {
         PadConfigurationFeatureHIDReport* configurationHidReport = ReportData;
         configurationHidReport->configuration = PAD_CONF;
         *ReportSize = sizeof (PadConfigurationFeatureHIDReport);
+    } else if (*ReportID == NAME_REPORT_ID) {
+        NameFeatureHIDReport* nameHidReport = ReportData;
+        memcpy(&nameHidReport->nameAndSize, &configuration.nameAndSize, sizeof (nameHidReport->nameAndSize));
+        *ReportSize = sizeof (NameFeatureHIDReport);
     }
     
     return true;
@@ -170,12 +180,16 @@ void CALLBACK_HID_Device_ProcessHIDReport(USB_ClassInfo_HID_Device_t* const HIDI
                                           const void* ReportData,
                                           const uint16_t ReportSize)
 {
-    if (ReportID == CONFIGURATION_REPORT_ID && ReportSize == sizeof (PadConfigurationFeatureHIDReport)) {
+    if (ReportID == PAD_CONFIGURATION_REPORT_ID && ReportSize == sizeof (PadConfigurationFeatureHIDReport)) {
         const PadConfigurationFeatureHIDReport* configurationHidReport = ReportData;
+        memcpy(&configuration.padConfiguration, &configurationHidReport->configuration, sizeof (configuration.padConfiguration));
         Pad_UpdateConfiguration(&configurationHidReport->configuration);
     } else if (ReportID == RESET_REPORT_ID) {
         Reset_JumpToBootloader();
-    } else if (ReportID == SAVE_CONFIGURATION_REPORT_ID) {
-        Pad_SaveConfiguration();
+    } else if (ReportID == SAVE_PAD_CONFIGURATION_REPORT_ID) {    
+        ConfigStore_StoreConfiguration(&configuration);
+    } else if (ReportID == NAME_REPORT_ID) {
+        const NameFeatureHIDReport* nameHidReport = ReportData;
+        memcpy(&configuration.nameAndSize, &nameHidReport->nameAndSize, sizeof (configuration.nameAndSize));
     }
 }

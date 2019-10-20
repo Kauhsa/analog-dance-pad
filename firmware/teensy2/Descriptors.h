@@ -78,9 +78,10 @@
 
         
         #define INPUT_REPORT_ID 0x01
-        #define CONFIGURATION_REPORT_ID 0x02
+        #define PAD_CONFIGURATION_REPORT_ID 0x02
         #define RESET_REPORT_ID 0x03
-        #define SAVE_CONFIGURATION_REPORT_ID 0x04
+        #define SAVE_PAD_CONFIGURATION_REPORT_ID 0x04
+        #define NAME_REPORT_ID 0x05
 
     /* Macros: */
         /** Endpoint address of the Generic HID reporting IN endpoint. */

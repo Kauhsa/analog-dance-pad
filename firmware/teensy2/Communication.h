@@ -4,6 +4,8 @@
     #include <stdint.h>
     #include "Config/DancePadConfig.h"
     #include "Pad.h"
+    #include "Communication.h"
+    #include "ConfigStore.h"
 
     // small helper macro to do x / y, but rounded up instead of floored.
     #define CEILING(x,y) (((x) + (y) - 1) / (y))
@@ -26,6 +28,10 @@
     typedef struct {
         PadConfiguration configuration;
     } __attribute__((packed)) PadConfigurationFeatureHIDReport;
+
+    typedef struct {
+        NameAndSize nameAndSize;
+    } __attribute__((packed)) NameFeatureHIDReport;
 
     void Communication_WriteInputHIDReport(InputHIDReport* report);
 #endif

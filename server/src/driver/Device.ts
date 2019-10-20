@@ -14,6 +14,7 @@ export interface DeviceEvents {
 
 // this is information that user is excepted to reconfigure
 export interface DeviceConfiguration {
+  name: string
   sensorThresholds: number[]
   releaseThreshold: number
   sensorToButtonMapping: number[]

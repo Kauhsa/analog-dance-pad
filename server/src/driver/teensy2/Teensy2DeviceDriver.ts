@@ -36,17 +36,22 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     const hidDevice = new HID.HID(devicePath)
 
     try {
-      const data = hidDevice.getFeatureReport(
-        ReportID.CONFIGURATION,
+      const padConfigurationData = hidDevice.getFeatureReport(
+        ReportID.PAD_CONFIGURATION,
         reportManager.getConfigurationReportSize()
       )
+      const padConfigurationReport = reportManager.parseConfigurationReport(
+        Buffer.from(padConfigurationData)
+      )
 
-      const parsedReport = reportManager.parseConfigurationReport(Buffer.from(data))
+      const nameData = hidDevice.getFeatureReport(ReportID.NAME, reportManager.getNameReportSize())
+      const nameReport = reportManager.parseNameReport(Buffer.from(nameData))
 
       const configuration: DeviceConfiguration = {
-        sensorThresholds: parsedReport.sensorThresholds,
-        releaseThreshold: parsedReport.releaseThreshold,
-        sensorToButtonMapping: parsedReport.sensorToButtonMapping
+        name: nameReport.name,
+        sensorThresholds: padConfigurationReport.sensorThresholds,
+        releaseThreshold: padConfigurationReport.releaseThreshold,
+        sensorToButtonMapping: padConfigurationReport.sensorToButtonMapping
       }
       return new Teensy2Device(devicePath, configuration, hidDevice, onClose)
     } catch (e) {
@@ -96,7 +101,17 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   }
 
   public updateConfiguration(configuration: DeviceConfiguration) {
-    this.device.sendFeatureReport(reportManager.createConfigurationReport(configuration))
+    // set pad configuration in first report
+    this.device.sendFeatureReport(
+      reportManager.createConfigurationReport({
+        releaseThreshold: configuration.releaseThreshold,
+        sensorThresholds: configuration.sensorThresholds,
+        sensorToButtonMapping: configuration.sensorToButtonMapping
+      })
+    )
+
+    // then, send name
+    this.device.sendFeatureReport(reportManager.createNameReport({ name: configuration.name }))
     this.configuration = configuration
   }
 

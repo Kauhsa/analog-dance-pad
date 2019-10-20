@@ -1,10 +1,13 @@
 import { Parser } from 'binary-parser'
 
+const MAX_NAME_SIZE = 50
+
 export enum ReportID {
   SENSOR_VALUES = 0x01,
-  CONFIGURATION = 0x02,
+  PAD_CONFIGURATION = 0x02,
   RESET = 0x03,
-  SAVE_CONFIGURATION = 0x04
+  SAVE_CONFIGURATION = 0x04,
+  NAME = 0x05
 }
 
 export interface InputReport {
@@ -18,11 +21,16 @@ export interface ConfigurationReport {
   sensorToButtonMapping: number[]
 }
 
+export interface NameReport {
+  name: string
+}
+
 export class ReportManager {
   private buttonCount: number
   private sensorCount: number
   private inputReportParser: Parser<any>
   private configurationReportParser: Parser<any>
+  private nameReportParser: Parser<any>
 
   constructor(settings: { buttonCount: number; sensorCount: number }) {
     this.buttonCount = settings.buttonCount
@@ -40,7 +48,7 @@ export class ReportManager {
 
     this.configurationReportParser = new Parser()
       .uint8('reportId', {
-        assert: ReportID.CONFIGURATION
+        assert: ReportID.PAD_CONFIGURATION
       })
       .array('sensorThresholds', {
         type: 'uint16le',
@@ -51,6 +59,13 @@ export class ReportManager {
         type: 'int8',
         length: this.sensorCount
       })
+
+    this.nameReportParser = new Parser()
+      .uint8('reportId', {
+        assert: ReportID.NAME
+      })
+      .uint8('size')
+      .string('name', { length: 'size' })
   }
 
   private formatButtons = (data: number) => {
@@ -73,7 +88,21 @@ export class ReportManager {
   }
 
   parseConfigurationReport(data: Buffer): ConfigurationReport {
-    return this.configurationReportParser.parse(data)
+    const parsed = this.configurationReportParser.parse(data)
+
+    return {
+      releaseThreshold: parsed.releaseThreshold,
+      sensorThresholds: parsed.sensorThresholds,
+      sensorToButtonMapping: parsed.sensorToButtonMapping
+    }
+  }
+
+  parseNameReport(data: Buffer): NameReport {
+    const parsed = this.nameReportParser.parse(data)
+
+    return {
+      name: parsed.name
+    }
   }
 
   getConfigurationReportSize = () => {
@@ -90,7 +119,7 @@ export class ReportManager {
     let pos = 0
 
     // report ID
-    buffer.writeUInt8(ReportID.CONFIGURATION, 0)
+    buffer.writeUInt8(ReportID.PAD_CONFIGURATION, pos)
     pos += 1
 
     // sensor thresholds
@@ -114,5 +143,29 @@ export class ReportManager {
 
   createSaveConfigurationReport(): number[] {
     return [ReportID.SAVE_CONFIGURATION, 0x00]
+  }
+
+  getNameReportSize(): number {
+    // 1 for report id
+    // 1 for size (uint8)
+    return 1 + 1 + MAX_NAME_SIZE
+  }
+
+  createNameReport(report: NameReport): number[] {
+    const buffer = Buffer.alloc(this.getNameReportSize())
+    let pos = 0
+
+    // report ID
+    buffer.writeUInt8(ReportID.NAME, pos)
+    pos += 1
+
+    // name length
+    buffer.writeUInt8(report.name.length, pos)
+    pos += 1
+
+    // name itself
+    buffer.write(report.name, pos, 'utf8')
+
+    return [...buffer]
   }
 }

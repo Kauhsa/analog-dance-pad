@@ -19,5 +19,8 @@
       "autoFix": true
     }
   ],
-  "C_Cpp.default.cStandard": "c11"
+  "C_Cpp.default.cStandard": "c11",
+  "files.associations": {
+    "typeinfo": "c"
+  }
 }
