@@ -106,6 +106,23 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM GenericReport[] =
             HID_RI_REPORT_COUNT(8, sizeof (NameFeatureHIDReport)),
             HID_RI_FEATURE(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE | HID_IOF_NON_VOLATILE),
         HID_RI_END_COLLECTION(0),
+        
+        // unused joystick report. we only report this because stepmania uses
+        // old joystick interface on linux if device doesn't have any analog
+        // axis.
+        HID_RI_REPORT_ID(8, UNUSED_ANALOG_JOYSTICK_REPORT_ID),
+        HID_RI_USAGE_PAGE(8, 0x01),
+        HID_RI_USAGE(8, 0x04),
+        HID_RI_COLLECTION(8, 0x00),
+            HID_RI_USAGE(8, 0x30), // X axis
+            HID_RI_LOGICAL_MINIMUM(16, 0),
+            HID_RI_LOGICAL_MAXIMUM(16, 127),
+            HID_RI_PHYSICAL_MINIMUM(16, 0),
+            HID_RI_PHYSICAL_MAXIMUM(16, 127),
+            HID_RI_REPORT_COUNT(8, 1),
+            HID_RI_REPORT_SIZE(8, 8),
+            HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+        HID_RI_END_COLLECTION(0),
     HID_RI_END_COLLECTION(0)
 };
 

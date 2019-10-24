@@ -82,6 +82,7 @@
         #define RESET_REPORT_ID 0x03
         #define SAVE_CONFIGURATION_REPORT_ID 0x04
         #define NAME_REPORT_ID 0x05
+        #define UNUSED_ANALOG_JOYSTICK_REPORT_ID 0x06
 
     /* Macros: */
         /** Endpoint address of the Generic HID reporting IN endpoint. */
