@@ -8,6 +8,7 @@ import styled, { createGlobalStyle } from 'styled-components'
 import { Helmet, HelmetProvider } from 'react-helmet-async'
 import { ButtonType } from './domain/Button'
 import { colors } from './utils/colors'
+import { SocketContextProvider } from './context/SocketContext'
 
 const AppContainer = styled.div`
   height: 100%;
@@ -102,6 +103,8 @@ const BUTTONS: ButtonType[] = [
   }
 ]
 
+const SERVER_ADDRESSES = ['http://localhost:3333']
+
 const App = () => (
   <HelmetProvider>
     <Helmet>
@@ -110,9 +113,11 @@ const App = () => (
 
     <GlobalStyles />
 
-    <AppContainer>
-      <ButtonGroup buttons={BUTTONS} />
-    </AppContainer>
+    <SocketContextProvider serverAddresses={SERVER_ADDRESSES}>
+      <AppContainer>
+        <ButtonGroup buttons={BUTTONS} />
+      </AppContainer>
+    </SocketContextProvider>
   </HelmetProvider>
 )
 

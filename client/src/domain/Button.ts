@@ -1,3 +1,9 @@
+export interface DeviceState {
+  id: string
+  name: string
+  buttons: ButtonType[]
+}
+
 export interface ButtonType {
   name: string
   sensors: SensorType[]
