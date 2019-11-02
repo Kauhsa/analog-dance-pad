@@ -36,9 +36,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/**/*.ts --max-warnings=0",
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "start": "nodemon --transpile-only src/index.ts",
+    "build": "tsc --build",
+    "start": "nodemon --transpile-only --build src/index.ts",
     "reset-teensy": "ts-node src/driver/teensy2/util/Teensy2Reset.ts",
     "socket-cli": "DEBUG=socket.io-client:socket* node -i -e 'const client = require(\"socket.io-client\")(\"http://localhost:3333\")'"
   },

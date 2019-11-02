@@ -21,5 +21,8 @@
   },
   "include": [
     "src"
+  ],
+  "references": [
+    { "path": "../common-types" }
   ]
 }

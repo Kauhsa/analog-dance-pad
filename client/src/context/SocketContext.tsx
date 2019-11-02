@@ -1,6 +1,7 @@
 import React from 'react'
 import io from 'socket.io-client'
 
+import { DevicesUpdatedEvent } from '../../../common-types/messages'
 import { useServerState, ServerState } from '../stateHooks/useServerState'
 
 interface ContextValue {
@@ -34,7 +35,7 @@ export const SocketContextProvider: React.FC<Props> = ({
         dispatch({ type: 'disconnect', address })
       })
 
-      socket.on('devicesUpdated', (e: any) => {
+      socket.on('devicesUpdated', (e: DevicesUpdatedEvent) => {
         dispatch({ type: 'devicesUpdated', address, devices: e.devices })
       })
     }

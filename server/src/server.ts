@@ -1,6 +1,14 @@
 import consola from 'consola'
 
-import { Device, DeviceInputData, DeviceConfiguration, DeviceProperties } from './driver/Device'
+import {
+  SubscribeToDeviceEvent,
+  DevicesUpdatedEvent,
+  UpdateConfigurationEvent,
+  SaveConfigurationEvent,
+  UnsubscribeFromDeviceEvent,
+  EventRateEvent
+} from '../../common-types/messages'
+import { Device, DeviceInputData } from './driver/Device'
 import { DeviceDriver } from './driver/Driver'
 
 const SECOND_AS_NS = BigInt(1e9)
@@ -10,40 +18,6 @@ interface Params {
   expressApplication: Express.Application
   socketIOServer: SocketIO.Server
   deviceDrivers: DeviceDriver[]
-}
-
-// from server
-
-type DevicesUpdatedEvent = {
-  devices: Array<{
-    id: string
-    configuration: DeviceConfiguration
-    properties: DeviceProperties
-  }>
-}
-
-type EventRateEvent = {
-  deviceId: string
-  eventRate: number
-}
-
-// from client
-
-type UpdateConfigurationEvent = {
-  deviceId: string
-  configuration: DeviceConfiguration
-}
-
-type SubscribeToDeviceEvent = {
-  deviceId: string
-}
-
-type UnsubscribeFromDeviceEvent = {
-  deviceId: string
-}
-
-type SaveConfigurationEvent = {
-  deviceId: string
 }
 
 const createServer = (params: Params) => {
@@ -96,7 +70,8 @@ const createServer = (params: Params) => {
   }
 
   const handleEventRate = (device: Device, rate: number) => {
-    params.socketIOServer.to(device.id).emit('eventRate', { deviceId: device.id, eventRate: rate })
+    const event: EventRateEvent = { deviceId: device.id, eventRate: rate }
+    params.socketIOServer.to(device.id).emit('eventRate', event)
     consola.info(`Event rate with device "${device.id}" is ${rate}`)
   }
 

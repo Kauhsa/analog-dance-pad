@@ -1,6 +1,7 @@
 import React from 'react'
 import produce from 'immer'
-import { DeviceState } from '../domain/Button'
+
+import { DeviceDescription } from '../../../common-types/device'
 
 enum ServerStatus {
   Connected = 'connected',
@@ -14,7 +15,7 @@ interface BaseServerState {
 
 interface ConnectedServerState extends BaseServerState {
   type: ServerStatus.Connected
-  devices: DeviceState[]
+  devices: DeviceDescription[]
 }
 
 interface DisconnectedServerState extends BaseServerState {
@@ -35,7 +36,7 @@ type ServerReducerAction =
   | {
       type: 'devicesUpdated'
       address: string
-      devices: DeviceState[]
+      devices: DeviceDescription[]
     }
 
 export type ServersState = {
