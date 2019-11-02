@@ -17,3 +17,8 @@ export interface DeviceDescription {
   configuration: DeviceConfiguration
   properties: DeviceProperties
 }
+
+export interface DeviceInputData {
+  sensors: number[]
+  buttons: boolean[]
+}

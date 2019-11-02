@@ -1,11 +1,11 @@
-import { DeviceConfiguration, DeviceProperties } from '../../../common-types/device'
+import {
+  DeviceConfiguration,
+  DeviceProperties,
+  DeviceInputData
+} from '../../../common-types/device'
 
 import StrictEventEmitter from 'strict-event-emitter-types'
 import { EventEmitter } from 'events'
-export interface DeviceInputData {
-  sensors: number[]
-  buttons: boolean[]
-}
 
 export interface DeviceEvents {
   inputData: DeviceInputData

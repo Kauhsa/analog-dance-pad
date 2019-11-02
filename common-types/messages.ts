@@ -1,4 +1,4 @@
-import { DeviceConfiguration, DeviceDescription } from './device'
+import { DeviceConfiguration, DeviceDescription, DeviceInputData } from './device'
 
 // from server
 
@@ -9,6 +9,11 @@ export type DevicesUpdatedEvent = {
 export type EventRateEvent = {
   deviceId: string
   eventRate: number
+}
+
+export type DeviceInputEvent = {
+  deviceId: string
+  inputData: DeviceInputData
 }
 
 // from client

@@ -1,15 +1,9 @@
 import consola from 'consola'
 
-import {
-  SubscribeToDeviceEvent,
-  DevicesUpdatedEvent,
-  UpdateConfigurationEvent,
-  SaveConfigurationEvent,
-  UnsubscribeFromDeviceEvent,
-  EventRateEvent
-} from '../../common-types/messages'
-import { Device, DeviceInputData } from './driver/Device'
+import * as events from '../../common-types/messages'
+import { Device } from './driver/Device'
 import { DeviceDriver } from './driver/Driver'
+import { DeviceInputData } from '../../common-types/device'
 
 const SECOND_AS_NS = BigInt(1e9)
 const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(60) // 60hz
@@ -26,7 +20,7 @@ const createServer = (params: Params) => {
 
   /* Handlers */
 
-  const getDevicesUpdatedEvent = (): DevicesUpdatedEvent => ({
+  const getDevicesUpdatedEvent = (): events.DevicesUpdatedEvent => ({
     devices: Object.values(devices).map(({ id, configuration, properties }) => ({
       id,
       configuration,
@@ -65,12 +59,16 @@ const createServer = (params: Params) => {
       return
     }
 
-    params.socketIOServer.to(device.id).emit('inputEvent', { deviceId: device.id, inputData })
+    const event: events.DeviceInputEvent = {
+      deviceId: device.id,
+      inputData
+    }
+    params.socketIOServer.to(device.id).emit('inputEvent', event)
     lastInputEventSentByDevice[device.id] = now
   }
 
   const handleEventRate = (device: Device, rate: number) => {
-    const event: EventRateEvent = { deviceId: device.id, eventRate: rate }
+    const event: events.EventRateEvent = { deviceId: device.id, eventRate: rate }
     params.socketIOServer.to(device.id).emit('eventRate', event)
     consola.info(`Event rate with device "${device.id}" is ${rate}`)
   }
@@ -86,25 +84,25 @@ const createServer = (params: Params) => {
     consola.info('New SocketIO connection from', socket.handshake.address)
     socket.emit('devicesUpdated', getDevicesUpdatedEvent())
 
-    socket.on('subscribeToDevice', (data: SubscribeToDeviceEvent) => {
+    socket.on('subscribeToDevice', (data: events.SubscribeToDeviceEvent) => {
       consola.info(`Socket "${socket.handshake.address}" subscribed to device "${data.deviceId}"`)
       socket.join(data.deviceId)
     })
 
-    socket.on('unsubsribeFromDevice', (data: UnsubscribeFromDeviceEvent) => {
+    socket.on('unsubsribeFromDevice', (data: events.UnsubscribeFromDeviceEvent) => {
       consola.info(
         `Socket "${socket.handshake.address}" unsubscribed from device "${data.deviceId}"`
       )
       socket.leave(data.deviceId)
     })
 
-    socket.on('updateConfiguration', async (data: UpdateConfigurationEvent) => {
+    socket.on('updateConfiguration', async (data: events.UpdateConfigurationEvent) => {
       await devices[data.deviceId].updateConfiguration(data.configuration)
       broadcastDevicesUpdated()
       consola.info(`Device id "${data.deviceId}" configuration updated`, data.configuration)
     })
 
-    socket.on('saveConfiguration', async (data: SaveConfigurationEvent) => {
+    socket.on('saveConfiguration', async (data: events.SaveConfigurationEvent) => {
       await devices[data.deviceId].saveConfiguration()
     })
 
