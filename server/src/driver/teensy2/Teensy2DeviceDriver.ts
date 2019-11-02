@@ -18,6 +18,11 @@ const BUTTON_COUNT = 16
 
 const reportManager = new ReportManager({ buttonCount: BUTTON_COUNT, sensorCount: SENSOR_COUNT })
 
+const MAX_SENSOR_VALUE = 1024
+const normalizeSensorValues = (numbers: number[]) => numbers.map(n => n / MAX_SENSOR_VALUE)
+const denormalizeSensorValues = (numbers: number[]) =>
+  numbers.map(n => Math.floor(n * MAX_SENSOR_VALUE))
+
 export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements Device {
   private device: HID.HID
   private path: string
@@ -51,7 +56,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
       const configuration: DeviceConfiguration = {
         name: nameReport.name,
-        sensorThresholds: padConfigurationReport.sensorThresholds,
+        sensorThresholds: normalizeSensorValues(padConfigurationReport.sensorThresholds),
         releaseThreshold: padConfigurationReport.releaseThreshold,
         sensorToButtonMapping: padConfigurationReport.sensorToButtonMapping
       }
@@ -93,7 +98,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
     this.emit('inputData', {
       buttons: inputReport.buttons,
-      sensors: inputReport.sensorValues
+      sensors: normalizeSensorValues(inputReport.sensorValues)
     })
   }
 
@@ -107,7 +112,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.device.sendFeatureReport(
       reportManager.createConfigurationReport({
         releaseThreshold: configuration.releaseThreshold,
-        sensorThresholds: configuration.sensorThresholds,
+        sensorThresholds: denormalizeSensorValues(configuration.sensorThresholds),
         sensorToButtonMapping: configuration.sensorToButtonMapping
       })
     )
