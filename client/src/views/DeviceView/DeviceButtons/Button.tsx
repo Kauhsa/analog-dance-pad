@@ -1,8 +1,8 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
-import scale from '../utils/scale'
-import { colors } from '../utils/colors'
-import { ButtonType } from '../domain/Button'
+import scale from '../../../utils/scale'
+import { colors } from '../../../utils/colors'
+import { ButtonType } from '../../../domain/Button'
 import { useSpring, animated } from 'react-spring'
 import Sensor from './Sensor'
 
@@ -61,19 +61,16 @@ const Button = React.memo<Props>(({ selected, button, onSelect, onBack }) => {
   })
 
   return (
-    <Container
-      isPressed={button.pressed}
-      onClick={!selected ? onSelect : undefined}
-    >
+    <Container isPressed={false} onClick={!selected ? onSelect : undefined}>
       <Header style={interfaceElementsStyle}>
         <button onClick={onBack}>Back</button>
-        {button.name}
+        {button.buttonIndex}
       </Header>
 
       <Sensors>
         {button.sensors.map(sensor => (
           <Sensor
-            key={sensor.id}
+            key={sensor.sensorIndex}
             sensor={sensor}
             enableThresholdChange={!!selected}
           />

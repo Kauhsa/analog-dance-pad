@@ -1,9 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import scale from '../utils/scale'
+import scale from '../../../utils/scale'
 import Button from './Button'
 import { useSpring, animated } from 'react-spring'
-import { ButtonType } from '../domain/Button'
+import { buttonsFromDeviceDescription } from '../../../domain/Button'
+import { DeviceDescription } from '../../../../../common-types/device'
 
 const ScalingContainer = styled(animated.div)`
   position: absolute;
@@ -27,16 +28,20 @@ const Container = styled.div`
   width: 100%;
 `
 
-interface ButtonGroupProps {
-  buttons: ButtonType[]
+interface DeviceButtonsProps {
+  device: DeviceDescription
 }
 
-const ButtonGroup = React.memo<ButtonGroupProps>(props => {
+const DeviceButtons = React.memo<DeviceButtonsProps>(({ device }) => {
+  const buttons = React.useMemo(() => {
+    return buttonsFromDeviceDescription(device)
+  }, [device])
+
   const [selectedButton, setSelectedButton] = React.useState<null | number>(
     null
   )
 
-  const displayedItems = props.buttons.length
+  const displayedItems = buttons.length
 
   const animationProps = useSpring({
     width: selectedButton === null ? '100%' : `${displayedItems * 100}%`,
@@ -46,9 +51,9 @@ const ButtonGroup = React.memo<ButtonGroupProps>(props => {
   return (
     <Container>
       <ScalingContainer style={animationProps}>
-        {props.buttons.map((button, i) => (
+        {buttons.map((button, i) => (
           <Button
-            key={i}
+            key={button.buttonIndex}
             button={button}
             selected={selectedButton === i}
             onBack={() => setSelectedButton(null)}
@@ -60,4 +65,4 @@ const ButtonGroup = React.memo<ButtonGroupProps>(props => {
   )
 })
 
-export default ButtonGroup
+export default DeviceButtons

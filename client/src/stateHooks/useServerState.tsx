@@ -3,7 +3,7 @@ import produce from 'immer'
 
 import { DeviceDescription } from '../../../common-types/device'
 
-enum ServerStatus {
+export enum ServerStatus {
   Connected = 'connected',
   Disconnected = 'disconnected'
 }

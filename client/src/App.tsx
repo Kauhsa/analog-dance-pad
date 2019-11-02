@@ -3,12 +3,12 @@ import 'sanitize.css/forms.css'
 import 'sanitize.css/typography.css'
 
 import React from 'react'
-import ButtonGroup from './components/SensorGroup'
 import styled, { createGlobalStyle } from 'styled-components'
 import { Helmet, HelmetProvider } from 'react-helmet-async'
-import { ButtonType } from './domain/Button'
 import { colors } from './utils/colors'
 import { SocketContextProvider } from './context/SocketContext'
+import { BrowserRouter, Switch, Route } from 'react-router-dom'
+import DeviceView from './views/DeviceView/DeviceView'
 
 const AppContainer = styled.div`
   height: 100%;
@@ -31,79 +31,7 @@ const GlobalStyles = createGlobalStyle`
   }
 `
 
-const BUTTONS: ButtonType[] = [
-  {
-    name: 'Button 1',
-    pressed: false,
-    sensors: [
-      {
-        id: 0,
-        value: 0.1,
-        threshold: 0.5
-      },
-      {
-        id: 1,
-        value: 0.3,
-        threshold: 0.5
-      },
-      {
-        id: 2,
-        value: 0.5,
-        threshold: 0.5
-      }
-    ]
-  },
-  {
-    name: 'Button 2',
-    pressed: true,
-    sensors: [
-      {
-        id: 3,
-        value: 0.1,
-        threshold: 0.5
-      },
-      {
-        id: 4,
-        value: 0.6,
-        threshold: 0.5
-      }
-    ]
-  },
-  {
-    name: 'Button 3',
-    pressed: true,
-    sensors: [
-      {
-        id: 5,
-        value: 0.4,
-        threshold: 0.5
-      },
-      {
-        id: 6,
-        value: 0.8,
-        threshold: 0.5
-      }
-    ]
-  },
-  {
-    name: 'Button 4',
-    pressed: true,
-    sensors: [
-      {
-        id: 7,
-        value: 0.2,
-        threshold: 0.5
-      },
-      {
-        id: 8,
-        value: 0.6,
-        threshold: 0.5
-      }
-    ]
-  }
-]
-
-const SERVER_ADDRESSES = ['http://localhost:3333']
+const SERVER_ADDRESSES = ['localhost:3333']
 
 const App = () => (
   <HelmetProvider>
@@ -115,7 +43,19 @@ const App = () => (
 
     <SocketContextProvider serverAddresses={SERVER_ADDRESSES}>
       <AppContainer>
-        <ButtonGroup buttons={BUTTONS} />
+        <BrowserRouter>
+          <Switch>
+            <Route
+              path="/:server/:device"
+              render={({ match }) => (
+                <DeviceView
+                  serverId={decodeURIComponent(match.params.server)}
+                  deviceId={decodeURIComponent(match.params.device)}
+                />
+              )}
+            />
+          </Switch>
+        </BrowserRouter>
       </AppContainer>
     </SocketContextProvider>
   </HelmetProvider>

@@ -1,9 +1,9 @@
 import React from 'react'
 import styled from 'styled-components'
-import { colors } from '../utils/colors'
-import { SensorType } from '../domain/Button'
-import toPercentage from '../utils/toPercentage'
-import scale from '../utils/scale'
+import { colors } from '../../../utils/colors'
+import { SensorType } from '../../../domain/Button'
+import toPercentage from '../../../utils/toPercentage'
+import scale from '../../../utils/scale'
 import { animated, useSpring, config as springConfig } from 'react-spring'
 import { useDrag } from 'react-use-gesture'
 
@@ -91,26 +91,28 @@ const Sensor = React.memo<Props>(({ sensor, enableThresholdChange }) => {
     }
   })
 
+  const sensorValue = 0.5
+
   return (
     <Container ref={containerRef}>
       <ThresholdBar style={{ height: toPercentage(sensor.threshold) }} />
 
       <Bar
         style={{
-          height: toPercentage(sensor.value),
+          height: toPercentage(sensorValue),
           background: `linear-gradient(
             to top,
             ${colors.sensorBarBottomColor} 0,
-            ${colors.sensorBarTopColor} ${toPercentage(1 / sensor.value)}
+            ${colors.sensorBarTopColor} ${toPercentage(1 / sensorValue)}
           )`
         }}
       />
 
       <OverThresholdBar
         style={{
-          display: sensor.value > sensor.threshold ? 'block' : 'none',
+          display: sensorValue > sensor.threshold ? 'block' : 'none',
           bottom: toPercentage(sensor.threshold),
-          height: toPercentage(sensor.value - sensor.threshold)
+          height: toPercentage(sensorValue - sensor.threshold)
         }}
       />
 
