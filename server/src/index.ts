@@ -10,7 +10,7 @@ import consola from 'consola'
 function start(port: number, host: string) {
   const expressApplication = express()
   const httpServer = new HttpServer(expressApplication)
-  const socketIOServer = SocketIO(httpServer)
+  const socketIOServer = SocketIO(httpServer, { perMessageDeflate: false, httpCompression: false })
   expressApplication.use(cors())
   expressApplication.use(express.json())
 
