@@ -31,7 +31,9 @@ const GlobalStyles = createGlobalStyle`
   }
 `
 
-const SERVER_ADDRESSES = ['localhost:3333']
+const SERVER_ADDRESSES = process.env.REACT_APP_SERVER_ADDRESSES
+  ? process.env.REACT_APP_SERVER_ADDRESSES.split(',')
+  : ['localhost:3333']
 
 const App = () => (
   <HelmetProvider>
