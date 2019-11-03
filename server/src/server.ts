@@ -117,8 +117,8 @@ const createServer = (params: Params) => {
       )
     })
 
-    socket.on('disconnect', () => {
-      consola.info('Disconnected SocketIO from', socket.handshake.address)
+    socket.on('disconnect', (reason: string) => {
+      consola.info(`Disconnected SocketIO from "${socket.handshake.address}", reason: "${reason}"`)
     })
   })
 
