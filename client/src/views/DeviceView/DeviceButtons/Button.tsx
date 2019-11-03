@@ -14,7 +14,6 @@ const PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.pressedButtonBottom
 
 const Container = styled(animated.div)`
   position: relative;
-  border-radius: ${scale(0.5)};
   background: ${NOT_PRESSED_BACKGROUND};
   display: flex;
   white-space: nowrap;

@@ -1,23 +1,23 @@
 import React from 'react'
 import styled from 'styled-components'
-import scale from '../../../utils/scale'
 import Button from './Button'
 import { useSpring, animated } from 'react-spring'
 import { buttonsFromDeviceDescription } from '../../../domain/Button'
 import { DeviceDescription } from '../../../../../common-types/device'
+import toPercentage from '../../../utils/toPercentage'
 
 const ScalingContainer = styled(animated.div)`
   position: absolute;
   display: flex;
   flex-grow: 1;
   left: 0;
-  right: 0;
   top: 0;
   bottom: 0;
+  transform-origin: 0% 50%;
+  will-change: transform, width;
 
   > * {
     flex-grow: 1;
-    margin: ${scale(0.5)};
   }
 `
 
@@ -46,13 +46,17 @@ const DeviceButtons = React.memo<DeviceButtonsProps>(
     const displayedItems = buttons.length
 
     const animationProps = useSpring({
-      width: selectedButton === null ? '100%' : `${displayedItems * 100}%`,
-      left: selectedButton === null ? '0%' : `-${selectedButton * 100}%`
+      transform: `translateX(${
+        selectedButton === null
+          ? '0%'
+          : toPercentage(-(selectedButton / displayedItems))
+      }) scaleX(${selectedButton === null ? 1 / displayedItems : 1})`,
+      width: toPercentage(displayedItems)
     })
 
     return (
       <Container>
-        <ScalingContainer style={animationProps}>
+        <ScalingContainer style={{ ...animationProps }}>
           {buttons.map((button, i) => (
             <Button
               key={button.buttonIndex}
