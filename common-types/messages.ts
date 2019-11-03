@@ -20,7 +20,7 @@ export type DeviceInputEvent = {
 
 export type UpdateConfigurationEvent = {
   deviceId: string
-  configuration: DeviceConfiguration
+  configuration: Partial<DeviceConfiguration>
 }
 
 export type SubscribeToDeviceEvent = {

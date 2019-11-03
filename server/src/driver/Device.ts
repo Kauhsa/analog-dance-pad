@@ -17,7 +17,7 @@ export interface Device extends StrictEventEmitter<EventEmitter, DeviceEvents> {
   id: string
   properties: DeviceProperties
   configuration: DeviceConfiguration
-  updateConfiguration: (conf: DeviceConfiguration) => Promise<void>
+  updateConfiguration: (conf: Partial<DeviceConfiguration>) => Promise<void>
   saveConfiguration: () => Promise<void>
   close: () => void
 }

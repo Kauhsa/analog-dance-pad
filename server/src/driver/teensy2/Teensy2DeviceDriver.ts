@@ -107,23 +107,30 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.eventsSinceLastUpdate = 0
   }
 
-  public async updateConfiguration(configuration: DeviceConfiguration) {
-    // set pad configuration in first report
-    this.device.sendFeatureReport(
+  private async sendMultipleFeatureReports(...reports: number[][]) {
+    for (const report of reports) {
+      this.device.sendFeatureReport(report)
+
+      // for whatever reason, sending two feature reports too soon crashes on linux half of the
+      // time (sigh). but we can avoid that...
+      await delay(5)
+    }
+  }
+
+  public async updateConfiguration(updates: Partial<DeviceConfiguration>) {
+    const newConfiguration = { ...this.configuration, ...updates }
+
+    // TODO: only send configuration reports that are necessary
+    this.sendMultipleFeatureReports(
       reportManager.createConfigurationReport({
-        releaseThreshold: configuration.releaseThreshold,
-        sensorThresholds: denormalizeSensorValues(configuration.sensorThresholds),
-        sensorToButtonMapping: configuration.sensorToButtonMapping
-      })
+        releaseThreshold: newConfiguration.releaseThreshold,
+        sensorThresholds: denormalizeSensorValues(newConfiguration.sensorThresholds),
+        sensorToButtonMapping: newConfiguration.sensorToButtonMapping
+      }),
+      reportManager.createNameReport({ name: newConfiguration.name })
     )
 
-    // for whatever reason, sending two feature reports two soons crashes on linux half of the
-    // time (sigh). but we can avoid that...
-    await delay(5)
-
-    // then, send name
-    this.device.sendFeatureReport(reportManager.createNameReport({ name: configuration.name }))
-    this.configuration = configuration
+    this.configuration = newConfiguration
   }
 
   public async saveConfiguration() {
