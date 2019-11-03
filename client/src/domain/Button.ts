@@ -1,11 +1,5 @@
 import { DeviceDescription } from '../../../common-types/device'
 
-export interface DeviceState {
-  id: string
-  name: string
-  buttons: ButtonType[]
-}
-
 export interface ButtonType {
   buttonIndex: number
   sensors: SensorType[]
