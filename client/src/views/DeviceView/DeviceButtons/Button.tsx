@@ -24,6 +24,7 @@ const Header = styled(animated.div)`
   position: absolute;
   left: ${scale(2)};
   top: ${scale(1.5)};
+  z-index: 2;
 `
 
 const Sensors = styled.div`
