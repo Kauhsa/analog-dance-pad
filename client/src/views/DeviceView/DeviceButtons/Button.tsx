@@ -69,7 +69,7 @@ const Button = React.memo<Props>(
           immediate: true
         })
       },
-      [button]
+      [button.buttonIndex, setPressedStyle]
     )
 
     useEffect(

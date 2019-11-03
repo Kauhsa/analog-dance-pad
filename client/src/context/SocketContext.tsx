@@ -80,7 +80,7 @@ export const SocketContextProvider: React.FC<Props> = ({
 
       setServerObjects(localServerObjects)
     }
-  }, [])
+  }, [dispatch, serverAddresses])
 
   const subscribeToInputEvents: ContextValue['subscribeToInputEvents'] = React.useCallback(
     (serverAddress, deviceId, callback) => {

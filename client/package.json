@@ -3,16 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@types/chroma-js": "^1.4.3",
-    "@types/jest": "24.0.21",
-    "@types/lodash": "^4.14.144",
-    "@types/lodash-es": "^4.17.3",
-    "@types/node": "12.12.5",
-    "@types/react": "16.9.11",
-    "@types/react-dom": "16.9.3",
-    "@types/react-router-dom": "^5.1.2",
-    "@types/socket.io-client": "^1.4.32",
-    "@types/styled-components": "^4.1.20",
     "chroma-js": "^2.1.0",
     "immer": "^5.0.0",
     "lodash-es": "^4.17.15",
@@ -34,7 +24,7 @@
     "build-and-serve": "npm run build && serve -s build -p 3000",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "lint": "eslint src/**.ts src/**.tsx"
+    "lint": "eslint -c .eslintrc.js src/ --ext .ts --ext .tsx"
   },
   "eslintConfig": {},
   "browserslist": {
@@ -50,6 +40,16 @@
     ]
   },
   "devDependencies": {
+    "@types/chroma-js": "^1.4.3",
+    "@types/jest": "24.0.21",
+    "@types/lodash": "^4.14.144",
+    "@types/lodash-es": "^4.17.3",
+    "@types/node": "12.12.5",
+    "@types/react": "16.9.11",
+    "@types/react-dom": "16.9.3",
+    "@types/react-router-dom": "^5.1.2",
+    "@types/socket.io-client": "^1.4.32",
+    "@types/styled-components": "^4.1.20",
     "@typescript-eslint/eslint-plugin": "^2.6.0",
     "@typescript-eslint/parser": "^2.6.0",
     "cross-env": "^6.0.3",
@@ -57,6 +57,7 @@
     "eslint-config-prettier": "^6.5.0",
     "eslint-plugin-prettier": "^3.1.1",
     "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-react-hooks": "^2.2.0",
     "prettier": "^1.18.2",
     "serve": "^11.2.0"
   }

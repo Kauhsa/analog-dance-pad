@@ -84,7 +84,7 @@ const Sensor = React.memo<Props>(
           value
         })
       },
-      [sensor]
+      [sensor.sensorIndex, setSensorValue]
     )
 
     React.useEffect(
