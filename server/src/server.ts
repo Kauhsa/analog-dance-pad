@@ -6,7 +6,7 @@ import { DeviceDriver } from './driver/Driver'
 import { DeviceInputData } from '../../common-types/device'
 
 const SECOND_AS_NS = BigInt(1e9)
-const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(60) // 60hz
+const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(20) // 20hz
 
 interface Params {
   expressApplication: Express.Application
