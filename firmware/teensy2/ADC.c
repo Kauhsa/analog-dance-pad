@@ -32,7 +32,7 @@ uint16_t ADC_Read(uint8_t sensor) {
 
     #if ADC_TEST_MODE
         test_mode_value++;
-        return (test_mode_value + (sensor * 50)) % 1024;
+        return ((test_mode_value / 50) + (sensor * 50)) % 1024;
     #else
         return ADC;  
     #endif
