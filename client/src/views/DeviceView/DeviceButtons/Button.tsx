@@ -5,9 +5,11 @@ import { colors } from '../../../utils/colors'
 import { ButtonType } from '../../../domain/Button'
 import { useSpring, animated } from 'react-spring'
 import Sensor from './Sensor'
-import { DeviceDescription } from '../../../../../common-types/device'
-import { useServerContext } from '../../../context/SocketContext'
-import { DeviceInputEvent } from '../../../../../common-types/messages'
+import {
+  DeviceDescription,
+  DeviceInputData
+} from '../../../../../common-types/device'
+import { useServerConnectionByAddr } from '../../../context/SocketContext'
 
 const NOT_PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.buttonBottomColor} 0%, ${colors.buttonTopColor} 100%)`
 const PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.pressedButtonBottomColor} 0%, ${colors.pressedBottomTopColor} 100%)`
@@ -50,7 +52,7 @@ interface Props {
 
 const Button = React.memo<Props>(
   ({ selected, button, device, serverAddress, onSelect, onBack }) => {
-    const serverContext = useServerContext()
+    const serverConnection = useServerConnectionByAddr(serverAddress)
 
     const interfaceElementsStyle = useSpring({
       opacity: selected ? 1 : 0
@@ -61,8 +63,8 @@ const Button = React.memo<Props>(
     }))
 
     const handleInputEvent = React.useCallback(
-      (inputEvent: DeviceInputEvent) => {
-        const isPressed = inputEvent.inputData.buttons[button.buttonIndex]
+      (inputData: DeviceInputData) => {
+        const isPressed = inputData.buttons[button.buttonIndex]
 
         setPressedStyle({
           background: isPressed ? PRESSED_BACKGROUND : NOT_PRESSED_BACKGROUND,
@@ -72,15 +74,16 @@ const Button = React.memo<Props>(
       [button.buttonIndex, setPressedStyle]
     )
 
-    useEffect(
-      () =>
-        serverContext.subscribeToInputEvents(
-          serverAddress,
-          device.id,
-          handleInputEvent
-        ),
-      [serverAddress, device, serverContext, handleInputEvent]
-    )
+    useEffect(() => {
+      if (!serverConnection) {
+        return
+      }
+
+      return serverConnection.subscribeToInputEvents(
+        device.id,
+        handleInputEvent
+      )
+    }, [serverAddress, device, handleInputEvent, serverConnection])
 
     return (
       <Container

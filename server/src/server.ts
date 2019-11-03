@@ -1,6 +1,6 @@
 import consola from 'consola'
 
-import * as events from '../../common-types/messages'
+import { ServerEvents, ClientEvents } from '../../common-types/events'
 import { Device } from './driver/Device'
 import { DeviceDriver } from './driver/Driver'
 import { DeviceInputData } from '../../common-types/device'
@@ -20,7 +20,7 @@ const createServer = (params: Params) => {
 
   /* Handlers */
 
-  const getDevicesUpdatedEvent = (): events.DevicesUpdatedEvent => ({
+  const getDevicesUpdatedEvent = (): ServerEvents.DevicesUpdated => ({
     devices: Object.values(devices).map(({ id, configuration, properties }) => ({
       id,
       configuration,
@@ -59,7 +59,7 @@ const createServer = (params: Params) => {
       return
     }
 
-    const event: events.DeviceInputEvent = {
+    const event: ServerEvents.InputEvent = {
       deviceId: device.id,
       inputData
     }
@@ -68,7 +68,7 @@ const createServer = (params: Params) => {
   }
 
   const handleEventRate = (device: Device, rate: number) => {
-    const event: events.EventRateEvent = { deviceId: device.id, eventRate: rate }
+    const event: ServerEvents.EventRate = { deviceId: device.id, eventRate: rate }
     params.socketIOServer.to(device.id).emit('eventRate', event)
     consola.info(`Event rate with device "${device.id}" is ${rate}`)
   }
@@ -84,26 +84,37 @@ const createServer = (params: Params) => {
     consola.info('New SocketIO connection from', socket.handshake.address)
     socket.emit('devicesUpdated', getDevicesUpdatedEvent())
 
-    socket.on('subscribeToDevice', (data: events.SubscribeToDeviceEvent) => {
+    socket.on('subscribeToDevice', (data: ClientEvents.SubscribeToDevice) => {
       consola.info(`Socket "${socket.handshake.address}" subscribed to device "${data.deviceId}"`)
       socket.join(data.deviceId)
     })
 
-    socket.on('unsubsribeFromDevice', (data: events.UnsubscribeFromDeviceEvent) => {
+    socket.on('unsubscribeFromDevice', (data: ClientEvents.UnsubscribeFromDevice) => {
       consola.info(
         `Socket "${socket.handshake.address}" unsubscribed from device "${data.deviceId}"`
       )
       socket.leave(data.deviceId)
     })
 
-    socket.on('updateConfiguration', async (data: events.UpdateConfigurationEvent) => {
+    socket.on('updateConfiguration', async (data: ClientEvents.UpdateConfiguration) => {
       await devices[data.deviceId].updateConfiguration(data.configuration)
       broadcastDevicesUpdated()
       consola.info(`Device id "${data.deviceId}" configuration updated`, data.configuration)
     })
 
-    socket.on('saveConfiguration', async (data: events.SaveConfigurationEvent) => {
+    socket.on('saveConfiguration', async (data: ClientEvents.SaveConfiguration) => {
       await devices[data.deviceId].saveConfiguration()
+    })
+
+    socket.on('updateSensorThreshold', async (data: ClientEvents.UpdateSensorThreshold) => {
+      const sensorThresholds = [...devices[data.deviceId].configuration.sensorThresholds]
+      sensorThresholds[data.sensorIndex] = data.newThreshold
+
+      await devices[data.deviceId].updateConfiguration({ sensorThresholds })
+      broadcastDevicesUpdated()
+      consola.info(
+        `Device id "${data.deviceId}" had sensor ${data.sensorIndex} threshold changed to ${data.newThreshold}`
+      )
     })
 
     socket.on('disconnect', () => {

@@ -1,6 +1,6 @@
 import React from 'react'
 import { useServerContext } from '../../context/SocketContext'
-import { ServerStatus } from '../../stateHooks/useServerState'
+import { ServerConnectionStatus } from '../../stateHooks/useServerState'
 import DeviceButtons from './DeviceButtons/DeviceButtons'
 
 interface Props {
@@ -10,13 +10,13 @@ interface Props {
 
 const DeviceView: React.FC<Props> = ({ serverId, deviceId }) => {
   const serverContext = useServerContext()
-  const server = serverContext.servers[serverId]
+  const server = serverContext.serversState.servers[serverId]
 
   if (!server) {
     return <p>Unknown server!</p>
   }
 
-  if (server.type !== ServerStatus.Connected) {
+  if (server.connectionStatus !== ServerConnectionStatus.Connected) {
     return <p>Not connected to server!</p>
   }
 

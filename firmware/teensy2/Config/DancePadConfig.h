@@ -10,5 +10,5 @@
     #define SENSOR_COUNT 12
 
     // don't actually use ACD values that are read.
-    #define ADC_TEST_MODE 1
+    #define ADC_TEST_MODE 0
 #endif

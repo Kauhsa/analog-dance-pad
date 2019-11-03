@@ -14,9 +14,11 @@ import { colors } from '../../../utils/colors'
 import { SensorType } from '../../../domain/Button'
 import toPercentage from '../../../utils/toPercentage'
 import scale from '../../../utils/scale'
-import { DeviceDescription } from '../../../../../common-types/device'
-import { DeviceInputEvent } from '../../../../../common-types/messages'
-import { useServerContext } from '../../../context/SocketContext'
+import {
+  DeviceDescription,
+  DeviceInputData
+} from '../../../../../common-types/device'
+import { useServerConnectionByAddr } from '../../../context/SocketContext'
 
 const Container = styled.div`
   height: 100%;
@@ -88,7 +90,8 @@ interface Props {
 
 const Sensor = React.memo<Props>(
   ({ serverAddress, device, sensor, enableThresholdChange }) => {
-    const serverContext = useServerContext()
+    const serverConnection = useServerConnectionByAddr(serverAddress)
+
     const containerRef = React.useRef<HTMLDivElement>(null)
     const currentlyDownRef = React.useRef<boolean>(false)
 
@@ -98,8 +101,8 @@ const Sensor = React.memo<Props>(
     }))
 
     const handleInputEvent = React.useCallback(
-      (inputEvent: DeviceInputEvent) => {
-        const value = inputEvent.inputData.sensors[sensor.sensorIndex]
+      (inputData: DeviceInputData) => {
+        const value = inputData.sensors[sensor.sensorIndex]
 
         setSensorValue({
           value
@@ -108,15 +111,16 @@ const Sensor = React.memo<Props>(
       [sensor.sensorIndex, setSensorValue]
     )
 
-    React.useEffect(
-      () =>
-        serverContext.subscribeToInputEvents(
-          serverAddress,
-          device.id,
-          handleInputEvent
-        ),
-      [serverAddress, device, serverContext, handleInputEvent]
-    )
+    React.useEffect(() => {
+      if (!serverConnection) {
+        return
+      }
+
+      return serverConnection.subscribeToInputEvents(
+        device.id,
+        handleInputEvent
+      )
+    }, [device.id, handleInputEvent, serverConnection])
 
     const [{ value: thresholdValue }, setThresholdValue] = useSpring(() => ({
       value: sensor.threshold
@@ -135,15 +139,18 @@ const Sensor = React.memo<Props>(
     })
 
     const handleSensorThresholdUpdate = React.useCallback(
-      (value: number) => {
-        serverContext.updateSensorThreshold(
-          serverAddress,
+      (newThreshold: number) => {
+        if (!serverConnection) {
+          return
+        }
+
+        serverConnection.updateSensorThreshold(
           device.id,
           sensor.sensorIndex,
-          value
+          newThreshold
         )
       },
-      [device.id, sensor.sensorIndex, serverAddress, serverContext]
+      [device.id, sensor.sensorIndex, serverConnection]
     )
 
     const [throttledSensorUpdate, cancelThrottledUpdate] = useDebouncedCallback(

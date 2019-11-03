@@ -3,23 +3,23 @@ import produce from 'immer'
 
 import { DeviceDescription } from '../../../common-types/device'
 
-export enum ServerStatus {
+export enum ServerConnectionStatus {
   Connected = 'connected',
   Disconnected = 'disconnected'
 }
 
 interface BaseServerState {
   address: string
-  type: ServerStatus
+  connectionStatus: ServerConnectionStatus
 }
 
 interface ConnectedServerState extends BaseServerState {
-  type: ServerStatus.Connected
+  connectionStatus: ServerConnectionStatus.Connected
   devices: DeviceDescription[]
 }
 
 interface DisconnectedServerState extends BaseServerState {
-  type: ServerStatus.Disconnected
+  connectionStatus: ServerConnectionStatus.Disconnected
 }
 
 export type ServerState = ConnectedServerState | DisconnectedServerState
@@ -49,7 +49,7 @@ const serverReducer: React.Reducer<ServersState, ServerReducerAction> = produce(
 
     if (action.type === 'connect') {
       draft.servers[address] = {
-        type: ServerStatus.Connected,
+        connectionStatus: ServerConnectionStatus.Connected,
         address: action.address,
         devices: []
       }
@@ -57,14 +57,14 @@ const serverReducer: React.Reducer<ServersState, ServerReducerAction> = produce(
 
     if (action.type === 'disconnect') {
       draft.servers[address] = {
-        type: ServerStatus.Disconnected,
+        connectionStatus: ServerConnectionStatus.Disconnected,
         address: action.address
       }
     }
 
     if (action.type === 'devicesUpdated') {
       const server = draft.servers[address]
-      if (server.type === ServerStatus.Connected) {
+      if (server.connectionStatus === ServerConnectionStatus.Connected) {
         server.devices = action.devices
       }
     }
@@ -77,7 +77,10 @@ export const useServerState = (serverAddresses: string[]) => {
       servers: serverAddresses.reduce((acc, address) => {
         return {
           ...acc,
-          [address]: { type: ServerStatus.Disconnected, address: address }
+          [address]: {
+            type: ServerConnectionStatus.Disconnected,
+            address: address
+          }
         }
       }, {})
     }),
