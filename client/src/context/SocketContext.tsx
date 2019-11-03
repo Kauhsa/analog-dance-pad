@@ -4,17 +4,39 @@ import { pull } from 'lodash-es'
 
 import {
   DevicesUpdatedEvent,
-  DeviceInputEvent
+  DeviceInputEvent,
+  UpdateConfigurationEvent,
+  SubscribeToDeviceEvent,
+  UnsubscribeFromDeviceEvent
 } from '../../../common-types/messages'
-import { useServerState, ServerState } from '../stateHooks/useServerState'
+import {
+  useServerState,
+  ServerState,
+  ServerStatus
+} from '../stateHooks/useServerState'
+import { DeviceConfiguration } from '../../../common-types/device'
 
 interface ContextValue {
   servers: { [serverAddress: string]: ServerState }
+
   subscribeToInputEvents: (
     serverAddress: string,
     deviceId: string,
     callback: (data: DeviceInputEvent) => void
   ) => () => void
+
+  updateConfiguration: (
+    serverAddress: string,
+    deviceId: string,
+    configuration: Partial<DeviceConfiguration>
+  ) => void
+
+  updateSensorThreshold: (
+    serverAddress: string,
+    deviceId: string,
+    sensorIndex: number,
+    newThreshold: number
+  ) => void
 }
 
 interface Props {
@@ -93,7 +115,8 @@ export const SocketContextProvider: React.FC<Props> = ({
       if (server.inputEventSubscribers[deviceId] !== undefined) {
         server.inputEventSubscribers[deviceId].push(callback)
       } else {
-        server.socket.emit('subscribeToDevice', { deviceId })
+        const subscribeToDeviceEvent: SubscribeToDeviceEvent = { deviceId }
+        server.socket.emit('subscribeToDevice', subscribeToDeviceEvent)
         server.inputEventSubscribers[deviceId] = [callback]
       }
 
@@ -106,7 +129,13 @@ export const SocketContextProvider: React.FC<Props> = ({
         pull(server.inputEventSubscribers[deviceId], callback)
 
         if (server.inputEventSubscribers[deviceId].length === 0) {
-          server.socket.emit('unsubscribeFromDevice', { deviceId })
+          const unsubscribeFromDeviceEvent: UnsubscribeFromDeviceEvent = {
+            deviceId
+          }
+          server.socket.emit(
+            'unsubscribeFromDevice',
+            unsubscribeFromDeviceEvent
+          )
           delete server.inputEventSubscribers[deviceId]
         }
       }
@@ -114,12 +143,65 @@ export const SocketContextProvider: React.FC<Props> = ({
     [serverObjects]
   )
 
+  const updateConfiguration: ContextValue['updateConfiguration'] = React.useCallback(
+    (serverAddress, deviceId, configuration) => {
+      const server = serverObjects[serverAddress]
+
+      if (!server) {
+        throw new Error('Unknown server!')
+      }
+
+      const updateConfigurationEvent: UpdateConfigurationEvent = {
+        deviceId,
+        configuration
+      }
+
+      server.socket.emit('updateConfiguration', updateConfigurationEvent)
+    },
+    [serverObjects]
+  )
+
+  const updateSensorThreshold: ContextValue['updateSensorThreshold'] = React.useCallback(
+    (serverAddress, deviceId, sensorIndex, newThreshold) => {
+      const server = serversState.servers[serverAddress]
+
+      if (!server) {
+        throw new Error('Unknown server!')
+      }
+
+      if (server.type !== ServerStatus.Connected) {
+        throw new Error('Not connected to server!')
+      }
+
+      const device = server.devices.find(d => d.id === deviceId)
+
+      if (!device) {
+        throw new Error('No such device!')
+      }
+
+      const newThresholds = [...device.configuration.sensorThresholds]
+      newThresholds[sensorIndex] = newThreshold
+
+      updateConfiguration(serverAddress, deviceId, {
+        sensorThresholds: newThresholds
+      })
+    },
+    [serversState.servers, updateConfiguration]
+  )
+
   const contextValue = React.useMemo(
     () => ({
       servers: serversState.servers,
-      subscribeToInputEvents: subscribeToInputEvents
+      subscribeToInputEvents,
+      updateConfiguration,
+      updateSensorThreshold
     }),
-    [serversState, subscribeToInputEvents]
+    [
+      serversState.servers,
+      subscribeToInputEvents,
+      updateConfiguration,
+      updateSensorThreshold
+    ]
   )
 
   return (

@@ -1,11 +1,19 @@
 import React from 'react'
 import styled from 'styled-components'
+import { useDebouncedCallback } from 'use-debounce'
+import {
+  animated,
+  useSpring,
+  config as springConfig,
+  interpolate
+} from 'react-spring'
+import { useDrag } from 'react-use-gesture'
+import { clamp } from 'lodash-es'
+
 import { colors } from '../../../utils/colors'
 import { SensorType } from '../../../domain/Button'
 import toPercentage from '../../../utils/toPercentage'
 import scale from '../../../utils/scale'
-import { animated, useSpring, config as springConfig } from 'react-spring'
-import { useDrag } from 'react-use-gesture'
 import { DeviceDescription } from '../../../../../common-types/device'
 import { DeviceInputEvent } from '../../../../../common-types/messages'
 import { useServerContext } from '../../../context/SocketContext'
@@ -15,12 +23,15 @@ const Container = styled.div`
   position: relative;
 `
 
-const ThresholdBar = styled.div`
+const ThresholdBar = styled(animated.div)`
+  background-color: ${colors.thresholdBar};
   bottom: 0;
   left: 0;
-  right: 0;
   position: absolute;
-  background-color: ${colors.thresholdBar};
+  right: 0;
+  top: 0;
+  transform-origin: 50% 100%;
+  will-change: transform;
 `
 
 const OverThresholdBar = styled(animated.div)`
@@ -70,6 +81,7 @@ const Sensor = React.memo<Props>(
   ({ serverAddress, device, sensor, enableThresholdChange }) => {
     const serverContext = useServerContext()
     const containerRef = React.useRef<HTMLDivElement>(null)
+    const currentlyDownRef = React.useRef<boolean>(false)
 
     const [{ value: sensorValue }, setSensorValue] = useSpring(() => ({
       value: 0,
@@ -97,14 +109,39 @@ const Sensor = React.memo<Props>(
       [serverAddress, device, serverContext, handleInputEvent]
     )
 
-    const [thresholdSpring, setThresholdSpring] = useSpring(() => ({
+    const [{ value: thresholdValue }, setThresholdValue] = useSpring(() => ({
       value: sensor.threshold
     }))
+
+    // update threshold whenever it updates on state
+    React.useEffect(() => {
+      if (!currentlyDownRef.current) {
+        setThresholdValue({ value: sensor.threshold, immediate: true })
+      }
+    }, [sensor.threshold, setThresholdValue])
 
     const thumbEnabledSpring = useSpring({
       opacity: enableThresholdChange ? 1 : 0,
       config: springConfig.stiff
     })
+
+    const handleSensorThresholdUpdate = React.useCallback(
+      (value: number) => {
+        serverContext.updateSensorThreshold(
+          serverAddress,
+          device.id,
+          sensor.sensorIndex,
+          value
+        )
+      },
+      [device.id, sensor.sensorIndex, serverAddress, serverContext]
+    )
+
+    const [throttledSensorUpdate, cancelThrottledUpdate] = useDebouncedCallback(
+      handleSensorThresholdUpdate,
+      200,
+      { maxWait: 500 }
+    )
 
     const bindThumb = useDrag(({ down, xy }) => {
       if (!containerRef.current || !enableThresholdChange) {
@@ -112,25 +149,31 @@ const Sensor = React.memo<Props>(
       }
 
       const boundingRect = containerRef.current.getBoundingClientRect()
-      const newValue =
-        (boundingRect.height + boundingRect.top - xy[1]) / boundingRect.height
+      const newValue = clamp(
+        (boundingRect.height + boundingRect.top - xy[1]) / boundingRect.height,
+        0,
+        1
+      )
 
       if (down) {
-        setThresholdSpring({
-          value: newValue,
-          immediate: true
-        })
+        setThresholdValue({ value: newValue, immediate: true })
+        throttledSensorUpdate(newValue)
+        currentlyDownRef.current = true
       } else {
-        setThresholdSpring({
-          value: sensor.threshold,
-          immediate: false
-        })
+        cancelThrottledUpdate()
+        setThresholdValue({ value: newValue, immediate: true })
+        handleSensorThresholdUpdate(newValue)
+        currentlyDownRef.current = false
       }
     })
 
     return (
       <Container ref={containerRef}>
-        <ThresholdBar style={{ height: toPercentage(sensor.threshold) }} />
+        <ThresholdBar
+          style={{
+            transform: thresholdValue.interpolate(value => `scaleY(${value})`)
+          }}
+        />
 
         <Bar
           style={{
@@ -140,13 +183,13 @@ const Sensor = React.memo<Props>(
 
         <OverThresholdBar
           style={{
-            display: sensorValue.interpolate(value =>
-              value > sensor.threshold ? 'block' : 'none'
-            ),
-            transform: sensorValue.interpolate(
-              value =>
-                `translateY(${toPercentage(-sensor.threshold)}) scaleY(${value -
-                  sensor.threshold})`
+            transform: interpolate(
+              [sensorValue, thresholdValue],
+              (sensorValue, thresholdValue) => {
+                const translateY = toPercentage(-thresholdValue)
+                const scaleY = Math.max(sensorValue - thresholdValue, 0)
+                return `translateY(${translateY}) scaleY(${scaleY})`
+              }
             )
           }}
         />
@@ -154,11 +197,11 @@ const Sensor = React.memo<Props>(
         <Thumb
           {...bindThumb()}
           style={{
-            bottom: thresholdSpring.value.interpolate(toPercentage),
+            bottom: thresholdValue.interpolate(toPercentage),
             opacity: thumbEnabledSpring.opacity
           }}
         >
-          {thresholdSpring.value.interpolate(threshold =>
+          {thresholdValue.interpolate(threshold =>
             (threshold * 100).toFixed(1)
           )}
         </Thumb>
