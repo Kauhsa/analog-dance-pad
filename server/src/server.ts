@@ -63,7 +63,7 @@ const createServer = (params: Params) => {
       deviceId: device.id,
       inputData
     }
-    params.socketIOServer.to(device.id).emit('inputEvent', event)
+    params.socketIOServer.volatile.to(device.id).emit('inputEvent', event)
     lastInputEventSentByDevice[device.id] = now
   }
 
