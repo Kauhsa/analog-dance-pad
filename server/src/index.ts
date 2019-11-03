@@ -31,5 +31,5 @@ function start(port: number, host: string) {
 }
 
 const port = (process.env.PORT && parseInt(process.env.PORT, 10)) || 3333
-const host = process.env.HOST || '127.0.0.1'
+const host = process.env.HOST || '0.0.0.0'
 start(port, host)
