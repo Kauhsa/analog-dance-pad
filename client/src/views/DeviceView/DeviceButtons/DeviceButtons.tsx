@@ -56,7 +56,7 @@ const DeviceButtons = React.memo<DeviceButtonsProps>(
 
     return (
       <Container>
-        <ScalingContainer style={{ ...animationProps }}>
+        <ScalingContainer style={animationProps}>
           {buttons.map((button, i) => (
             <Button
               key={button.buttonIndex}
