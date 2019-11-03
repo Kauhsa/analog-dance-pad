@@ -10,7 +10,6 @@ interface Props {
 
 const DeviceView: React.FC<Props> = ({ serverId, deviceId }) => {
   const serverContext = useServerContext()
-
   const server = serverContext.servers[serverId]
 
   if (!server) {
@@ -27,7 +26,7 @@ const DeviceView: React.FC<Props> = ({ serverId, deviceId }) => {
     return <p>No such device on this server!</p>
   }
 
-  return <DeviceButtons device={device} />
+  return <DeviceButtons serverAddress={serverId} device={device} />
 }
 
 export default DeviceView

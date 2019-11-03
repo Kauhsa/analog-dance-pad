@@ -29,40 +29,45 @@ const Container = styled.div`
 `
 
 interface DeviceButtonsProps {
+  serverAddress: string
   device: DeviceDescription
 }
 
-const DeviceButtons = React.memo<DeviceButtonsProps>(({ device }) => {
-  const buttons = React.useMemo(() => {
-    return buttonsFromDeviceDescription(device)
-  }, [device])
+const DeviceButtons = React.memo<DeviceButtonsProps>(
+  ({ serverAddress, device }) => {
+    const buttons = React.useMemo(() => buttonsFromDeviceDescription(device), [
+      device
+    ])
 
-  const [selectedButton, setSelectedButton] = React.useState<null | number>(
-    null
-  )
+    const [selectedButton, setSelectedButton] = React.useState<null | number>(
+      null
+    )
 
-  const displayedItems = buttons.length
+    const displayedItems = buttons.length
 
-  const animationProps = useSpring({
-    width: selectedButton === null ? '100%' : `${displayedItems * 100}%`,
-    left: selectedButton === null ? '0%' : `-${selectedButton * 100}%`
-  })
+    const animationProps = useSpring({
+      width: selectedButton === null ? '100%' : `${displayedItems * 100}%`,
+      left: selectedButton === null ? '0%' : `-${selectedButton * 100}%`
+    })
 
-  return (
-    <Container>
-      <ScalingContainer style={animationProps}>
-        {buttons.map((button, i) => (
-          <Button
-            key={button.buttonIndex}
-            button={button}
-            selected={selectedButton === i}
-            onBack={() => setSelectedButton(null)}
-            onSelect={() => setSelectedButton(i)}
-          />
-        ))}
-      </ScalingContainer>
-    </Container>
-  )
-})
+    return (
+      <Container>
+        <ScalingContainer style={animationProps}>
+          {buttons.map((button, i) => (
+            <Button
+              key={button.buttonIndex}
+              button={button}
+              device={device}
+              serverAddress={serverAddress}
+              selected={selectedButton === i}
+              onBack={() => setSelectedButton(null)}
+              onSelect={() => setSelectedButton(i)}
+            />
+          ))}
+        </ScalingContainer>
+      </Container>
+    )
+  }
+)
 
 export default DeviceButtons

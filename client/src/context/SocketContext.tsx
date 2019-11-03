@@ -1,16 +1,34 @@
 import React from 'react'
 import io from 'socket.io-client'
+import { pull } from 'lodash-es'
 
-import { DevicesUpdatedEvent } from '../../../common-types/messages'
+import {
+  DevicesUpdatedEvent,
+  DeviceInputEvent
+} from '../../../common-types/messages'
 import { useServerState, ServerState } from '../stateHooks/useServerState'
 
 interface ContextValue {
   servers: { [serverAddress: string]: ServerState }
+  subscribeToInputEvents: (
+    serverAddress: string,
+    deviceId: string,
+    callback: (data: DeviceInputEvent) => void
+  ) => () => void
 }
 
 interface Props {
   children: React.ReactNode
   serverAddresses: string[]
+}
+
+type ServerObjects = {
+  [serverAddress: string]: {
+    socket: SocketIOClient.Socket
+    inputEventSubscribers: {
+      [deviceId: string]: Array<(inputEvent: DeviceInputEvent) => void>
+    }
+  }
 }
 
 const SocketContext = React.createContext<ContextValue | null>(null)
@@ -20,8 +38,11 @@ export const SocketContextProvider: React.FC<Props> = ({
   serverAddresses
 }) => {
   const [serversState, dispatch] = useServerState(serverAddresses)
+  const [serverObjects, setServerObjects] = React.useState<ServerObjects>({})
 
   React.useEffect(() => {
+    const localServerObjects: ServerObjects = {}
+
     for (const address of serverAddresses) {
       const socket = io(address, {
         transports: ['websocket']
@@ -35,17 +56,70 @@ export const SocketContextProvider: React.FC<Props> = ({
         dispatch({ type: 'disconnect', address })
       })
 
-      socket.on('devicesUpdated', (e: DevicesUpdatedEvent) => {
-        dispatch({ type: 'devicesUpdated', address, devices: e.devices })
+      socket.on('devicesUpdated', (event: DevicesUpdatedEvent) => {
+        dispatch({ type: 'devicesUpdated', address, devices: event.devices })
       })
+
+      socket.on('inputEvent', (event: DeviceInputEvent) => {
+        const currentSubscribers =
+          localServerObjects[address].inputEventSubscribers[event.deviceId]
+
+        if (!currentSubscribers) {
+          return
+        }
+
+        for (const subscriber of currentSubscribers) {
+          subscriber(event)
+        }
+      })
+
+      localServerObjects[address] = {
+        socket,
+        inputEventSubscribers: {}
+      }
+
+      setServerObjects(localServerObjects)
     }
   }, [])
 
+  const subscribeToInputEvents: ContextValue['subscribeToInputEvents'] = React.useCallback(
+    (serverAddress, deviceId, callback) => {
+      const server = serverObjects[serverAddress]
+
+      if (!server) {
+        return () => {}
+      }
+
+      if (server.inputEventSubscribers[deviceId] !== undefined) {
+        server.inputEventSubscribers[deviceId].push(callback)
+      } else {
+        server.socket.emit('subscribeToDevice', { deviceId })
+        server.inputEventSubscribers[deviceId] = [callback]
+      }
+
+      // unsubscribe callback
+      return () => {
+        if (server.inputEventSubscribers[deviceId] === undefined) {
+          return
+        }
+
+        pull(server.inputEventSubscribers[deviceId], callback)
+
+        if (server.inputEventSubscribers[deviceId].length === 0) {
+          server.socket.emit('unsubscribeFromDevice', { deviceId })
+          delete server.inputEventSubscribers[deviceId]
+        }
+      }
+    },
+    [serverObjects]
+  )
+
   const contextValue = React.useMemo(
     () => ({
-      servers: serversState.servers
+      servers: serversState.servers,
+      subscribeToInputEvents: subscribeToInputEvents
     }),
-    [serversState]
+    [serversState, subscribeToInputEvents]
   )
 
   return (

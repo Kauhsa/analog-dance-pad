@@ -6,6 +6,9 @@ import toPercentage from '../../../utils/toPercentage'
 import scale from '../../../utils/scale'
 import { animated, useSpring, config as springConfig } from 'react-spring'
 import { useDrag } from 'react-use-gesture'
+import { DeviceDescription } from '../../../../../common-types/device'
+import { DeviceInputEvent } from '../../../../../common-types/messages'
+import { useServerContext } from '../../../context/SocketContext'
 
 const Container = styled.div`
   height: 100%;
@@ -21,21 +24,22 @@ const ThresholdBar = styled.div`
   background-color: ${colors.thresholdBar};
 `
 
-const OverThresholdBar = styled.div`
+const OverThresholdBar = styled(animated.div)`
   background-color: ${colors.overThresholdBar};
   border-radius: ${scale(0.2)} ${scale(0.2)} 0 0;
-  box-shadow: 0px 0px ${scale(1)} ${colors.overThresholdBar};
   left: 0;
   position: absolute;
   right: 0;
+  will-change: bottom, height;
 `
 
-const Bar = styled.div`
+const Bar = styled(animated.div)`
   bottom: 0;
   left: 0;
   right: 0;
   border-radius: ${scale(0.2)} ${scale(0.2)} 0 0;
   position: absolute;
+  will-change: background, height;
 `
 
 const Thumb = styled(animated.div)`
@@ -53,82 +57,117 @@ const Thumb = styled(animated.div)`
 `
 
 interface Props {
+  serverAddress: string
+  device: DeviceDescription
   sensor: SensorType
   enableThresholdChange: boolean
 }
 
-const Sensor = React.memo<Props>(({ sensor, enableThresholdChange }) => {
-  const containerRef = React.useRef<HTMLDivElement>(null)
+const Sensor = React.memo<Props>(
+  ({ serverAddress, device, sensor, enableThresholdChange }) => {
+    const serverContext = useServerContext()
+    const containerRef = React.useRef<HTMLDivElement>(null)
 
-  const [thresholdSpring, setThresholdSpring] = useSpring(() => ({
-    value: sensor.threshold
-  }))
+    const [{ value: sensorValue }, setSensorValue] = useSpring(() => ({
+      value: 0,
+      config: { ...springConfig.stiff, clamp: true }
+    }))
 
-  const thumbEnabledSpring = useSpring({
-    opacity: enableThresholdChange ? 1 : 0,
-    config: springConfig.stiff
-  })
+    const handleInputEvent = React.useCallback(
+      (inputEvent: DeviceInputEvent) => {
+        const value = inputEvent.inputData.sensors[sensor.sensorIndex]
 
-  const bindThumb = useDrag(({ down, xy }) => {
-    if (!containerRef.current || !enableThresholdChange) {
-      return
-    }
+        setSensorValue({
+          value
+        })
+      },
+      [sensor]
+    )
 
-    const boundingRect = containerRef.current.getBoundingClientRect()
-    const newValue =
-      (boundingRect.height + boundingRect.top - xy[1]) / boundingRect.height
+    React.useEffect(
+      () =>
+        serverContext.subscribeToInputEvents(
+          serverAddress,
+          device.id,
+          handleInputEvent
+        ),
+      [serverAddress, device, serverContext, handleInputEvent]
+    )
 
-    if (down) {
-      setThresholdSpring({
-        value: newValue,
-        immediate: true
-      })
-    } else {
-      setThresholdSpring({
-        value: sensor.threshold,
-        immediate: false
-      })
-    }
-  })
+    const [thresholdSpring, setThresholdSpring] = useSpring(() => ({
+      value: sensor.threshold
+    }))
 
-  const sensorValue = 0.5
+    const thumbEnabledSpring = useSpring({
+      opacity: enableThresholdChange ? 1 : 0,
+      config: springConfig.stiff
+    })
 
-  return (
-    <Container ref={containerRef}>
-      <ThresholdBar style={{ height: toPercentage(sensor.threshold) }} />
+    const bindThumb = useDrag(({ down, xy }) => {
+      if (!containerRef.current || !enableThresholdChange) {
+        return
+      }
 
-      <Bar
-        style={{
-          height: toPercentage(sensorValue),
-          background: `linear-gradient(
-            to top,
-            ${colors.sensorBarBottomColor} 0,
-            ${colors.sensorBarTopColor} ${toPercentage(1 / sensorValue)}
-          )`
-        }}
-      />
+      const boundingRect = containerRef.current.getBoundingClientRect()
+      const newValue =
+        (boundingRect.height + boundingRect.top - xy[1]) / boundingRect.height
 
-      <OverThresholdBar
-        style={{
-          display: sensorValue > sensor.threshold ? 'block' : 'none',
-          bottom: toPercentage(sensor.threshold),
-          height: toPercentage(sensorValue - sensor.threshold)
-        }}
-      />
+      if (down) {
+        setThresholdSpring({
+          value: newValue,
+          immediate: true
+        })
+      } else {
+        setThresholdSpring({
+          value: sensor.threshold,
+          immediate: false
+        })
+      }
+    })
 
-      <Thumb
-        {...bindThumb()}
-        style={{
-          bottom: thresholdSpring.value.interpolate(toPercentage),
-          opacity: thumbEnabledSpring.opacity
-        }}
-      >
-        {thresholdSpring.value.interpolate(threshold =>
-          (threshold * 100).toFixed(1)
-        )}
-      </Thumb>
-    </Container>
-  )
-})
+    return (
+      <Container ref={containerRef}>
+        <ThresholdBar style={{ height: toPercentage(sensor.threshold) }} />
+
+        <Bar
+          style={{
+            height: sensorValue.interpolate(toPercentage),
+            background: sensorValue.interpolate(
+              value => `linear-gradient(
+                to top,
+                ${colors.sensorBarBottomColor} 0,
+                ${colors.sensorBarTopColor} ${toPercentage(1 / value)}
+              )`
+            )
+          }}
+        />
+
+        <OverThresholdBar
+          style={{
+            display: sensorValue.interpolate(value =>
+              value > sensor.threshold ? 'block' : 'none'
+            ),
+            bottom: toPercentage(sensor.threshold),
+            height: sensorValue.interpolate(value =>
+              toPercentage(value - sensor.threshold)
+            )
+          }}
+        />
+
+        <Thumb
+          {...bindThumb()}
+          style={{
+            bottom: thresholdSpring.value.interpolate(toPercentage),
+            opacity: thumbEnabledSpring.opacity
+          }}
+        >
+          {thresholdSpring.value.interpolate(threshold =>
+            (threshold * 100).toFixed(1)
+          )}
+        </Thumb>
+      </Container>
+    )
+  }
+)
 
 export default Sensor

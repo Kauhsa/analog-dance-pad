@@ -1,32 +1,23 @@
-import React from 'react'
-import styled, { css } from 'styled-components'
+import React, { useEffect } from 'react'
+import styled from 'styled-components'
 import scale from '../../../utils/scale'
 import { colors } from '../../../utils/colors'
 import { ButtonType } from '../../../domain/Button'
 import { useSpring, animated } from 'react-spring'
 import Sensor from './Sensor'
+import { DeviceDescription } from '../../../../../common-types/device'
+import { useServerContext } from '../../../context/SocketContext'
+import { DeviceInputEvent } from '../../../../../common-types/messages'
 
-const Container = styled(animated.div)<{ isPressed: boolean }>`
+const NOT_PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.buttonBottomColor} 0%, ${colors.buttonTopColor} 100%)`
+const PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.pressedButtonBottomColor} 0%, ${colors.pressedBottomTopColor} 100%)`
+
+const Container = styled(animated.div)`
   position: relative;
   border-radius: ${scale(0.5)};
-  background: linear-gradient(
-    to top,
-    ${colors.buttonBottomColor} 0%,
-    ${colors.buttonTopColor} 100%
-  );
-
+  background: ${NOT_PRESSED_BACKGROUND};
   display: flex;
   white-space: nowrap;
-
-  ${props =>
-    props.isPressed &&
-    css`
-      background: linear-gradient(
-        to top,
-        ${colors.pressedButtonBottomColor} 0%,
-        ${colors.pressedBottomTopColor} 100%
-      );
-    `}
 `
 
 const Header = styled(animated.div)`
@@ -49,35 +40,72 @@ const Sensors = styled.div`
 `
 
 interface Props {
+  serverAddress: string
+  device: DeviceDescription
   button: ButtonType
   selected?: boolean
   onSelect?: () => void
   onBack?: () => void
 }
 
-const Button = React.memo<Props>(({ selected, button, onSelect, onBack }) => {
-  const interfaceElementsStyle = useSpring({
-    opacity: selected ? 1 : 0
-  })
+const Button = React.memo<Props>(
+  ({ selected, button, device, serverAddress, onSelect, onBack }) => {
+    const serverContext = useServerContext()
 
-  return (
-    <Container isPressed={false} onClick={!selected ? onSelect : undefined}>
-      <Header style={interfaceElementsStyle}>
-        <button onClick={onBack}>Back</button>
-        {button.buttonIndex}
-      </Header>
+    const interfaceElementsStyle = useSpring({
+      opacity: selected ? 1 : 0
+    })
 
-      <Sensors>
-        {button.sensors.map(sensor => (
-          <Sensor
-            key={sensor.sensorIndex}
-            sensor={sensor}
-            enableThresholdChange={!!selected}
-          />
-        ))}
-      </Sensors>
-    </Container>
-  )
-})
+    const [pressedStyle, setPressedStyle] = useSpring(() => ({
+      background: NOT_PRESSED_BACKGROUND
+    }))
+
+    const handleInputEvent = React.useCallback(
+      (inputEvent: DeviceInputEvent) => {
+        const isPressed = inputEvent.inputData.buttons[button.buttonIndex]
+
+        setPressedStyle({
+          background: isPressed ? PRESSED_BACKGROUND : NOT_PRESSED_BACKGROUND,
+          immediate: true
+        })
+      },
+      [button]
+    )
+
+    useEffect(
+      () =>
+        serverContext.subscribeToInputEvents(
+          serverAddress,
+          device.id,
+          handleInputEvent
+        ),
+      [serverAddress, device, serverContext, handleInputEvent]
+    )
+
+    return (
+      <Container
+        style={pressedStyle}
+        onClick={!selected ? onSelect : undefined}
+      >
+        <Header style={interfaceElementsStyle}>
+          <button onClick={onBack}>Back</button>
+          {button.buttonIndex}
+        </Header>
+
+        <Sensors>
+          {button.sensors.map(sensor => (
+            <Sensor
+              key={sensor.sensorIndex}
+              device={device}
+              serverAddress={serverAddress}
+              sensor={sensor}
+              enableThresholdChange={!!selected}
+            />
+          ))}
+        </Sensors>
+      </Container>
+    )
+  }
+)
 
 export default Button
