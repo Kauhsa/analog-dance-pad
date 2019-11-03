@@ -1,0 +1,13 @@
+{
+  "name": "common-types",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "typescript": "^3.6.4"
+  }
+}
