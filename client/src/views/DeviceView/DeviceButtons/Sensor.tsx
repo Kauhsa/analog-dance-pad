@@ -56,18 +56,27 @@ const Bar = styled(animated.div)`
   will-change: transform;
 `
 
-const Thumb = styled(animated.div)`
-  position: absolute;
-  border-radius: 9999px;
-  color: white;
-  text-align: center;
-  line-height: 1;
-  transform: translate(-50%, 50%);
-  background-color: white;
+const ThumbContainer = styled(animated.div)`
+  display: flex;
+  justify-content: center;
   left: 50%;
-  color: black;
+  padding-bottom: ${scale(2)};
+  padding-top: ${scale(2)};
+  position: absolute;
+  transform: translate(-50%, 50%);
   user-select: none;
+  width: 100%;
+`
+
+const Thumb = styled(animated.div)`
+  background-color: white;
+  border-radius: 9999px;
+  color: black;
+  height: 100%;
+  line-height: 1;
   padding: ${scale(1)} ${scale(1)};
+  text-align: center;
+  user-select: none;
 `
 
 interface Props {
@@ -194,17 +203,19 @@ const Sensor = React.memo<Props>(
           }}
         />
 
-        <Thumb
+        <ThumbContainer
           {...bindThumb()}
           style={{
             bottom: thresholdValue.interpolate(toPercentage),
             opacity: thumbEnabledSpring.opacity
           }}
         >
-          {thresholdValue.interpolate(threshold =>
-            (threshold * 100).toFixed(1)
-          )}
-        </Thumb>
+          <Thumb>
+            {thresholdValue.interpolate(threshold =>
+              (threshold * 100).toFixed(1)
+            )}
+          </Thumb>
+        </ThumbContainer>
       </Container>
     )
   }
