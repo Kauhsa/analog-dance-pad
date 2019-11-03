@@ -148,8 +148,8 @@ const Sensor = React.memo<Props>(
 
     const [throttledSensorUpdate, cancelThrottledUpdate] = useDebouncedCallback(
       handleSensorThresholdUpdate,
-      200,
-      { maxWait: 500 }
+      100,
+      { maxWait: 250 }
     )
 
     const bindThumb = useDrag(({ down, xy }) => {
