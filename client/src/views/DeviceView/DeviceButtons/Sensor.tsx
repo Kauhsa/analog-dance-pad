@@ -20,26 +20,29 @@ const ThresholdBar = styled.div`
   left: 0;
   right: 0;
   position: absolute;
-  border-radius: ${scale(0.2)} ${scale(0.2)} 0 0;
   background-color: ${colors.thresholdBar};
 `
 
 const OverThresholdBar = styled(animated.div)`
   background-color: ${colors.overThresholdBar};
-  border-radius: ${scale(0.2)} ${scale(0.2)} 0 0;
   left: 0;
   position: absolute;
   right: 0;
-  will-change: bottom, height;
+  bottom: 0;
+  top: 0;
+  transform-origin: 50% 100%;
+  will-change: transform;
 `
 
 const Bar = styled(animated.div)`
+  background-color: ${colors.sensorBarColor};
   bottom: 0;
   left: 0;
-  right: 0;
-  border-radius: ${scale(0.2)} ${scale(0.2)} 0 0;
   position: absolute;
-  will-change: background, height;
+  right: 0;
+  top: 0;
+  transform-origin: 50% 100%;
+  will-change: transform;
 `
 
 const Thumb = styled(animated.div)`
@@ -131,14 +134,7 @@ const Sensor = React.memo<Props>(
 
         <Bar
           style={{
-            height: sensorValue.interpolate(toPercentage),
-            background: sensorValue.interpolate(
-              value => `linear-gradient(
-                to top,
-                ${colors.sensorBarBottomColor} 0,
-                ${colors.sensorBarTopColor} ${toPercentage(1 / value)}
-              )`
-            )
+            transform: sensorValue.interpolate(value => `scaleY(${value})`)
           }}
         />
 
@@ -147,9 +143,10 @@ const Sensor = React.memo<Props>(
             display: sensorValue.interpolate(value =>
               value > sensor.threshold ? 'block' : 'none'
             ),
-            bottom: toPercentage(sensor.threshold),
-            height: sensorValue.interpolate(value =>
-              toPercentage(value - sensor.threshold)
+            transform: sensorValue.interpolate(
+              value =>
+                `translateY(${toPercentage(-sensor.threshold)}) scaleY(${value -
+                  sensor.threshold})`
             )
           }}
         />

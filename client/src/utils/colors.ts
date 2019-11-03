@@ -18,8 +18,9 @@ export const colors = {
   pressedBottomTopColor: chroma(colorValues.lighterBlue)
     .brighten(0.5)
     .css(),
-  sensorBarBottomColor: colorValues.lightBlue,
-  sensorBarTopColor: colorValues.yellow,
+  sensorBarColor: colorValues.yellow,
   thresholdBar: 'rgba(0, 0, 0, 0.15)',
-  overThresholdBar: 'rgba(255, 255, 255, 0.5)'
+  overThresholdBar: chroma(colorValues.yellow)
+    .brighten(0.5)
+    .css()
 }
