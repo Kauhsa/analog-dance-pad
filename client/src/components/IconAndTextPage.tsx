@@ -4,6 +4,7 @@ import scale from '../utils/scale'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { IconProp } from '@fortawesome/fontawesome-svg-core'
+import TopBar from './TopBar'
 
 interface Props {
   icon: IconProp
@@ -34,10 +35,13 @@ const Container = styled.div`
 `
 
 const IconAndTextPage = React.memo<Props>(({ icon, children }) => (
-  <Container>
-    <FontAwesomeIcon icon={icon} />
-    <div>{children}</div>
-  </Container>
+  <>
+    <TopBar />
+    <Container>
+      <FontAwesomeIcon icon={icon} />
+      <div>{children}</div>
+    </Container>
+  </>
 ))
 
 export default IconAndTextPage

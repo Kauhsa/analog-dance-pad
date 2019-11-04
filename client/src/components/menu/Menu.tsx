@@ -1,5 +1,5 @@
 import React from 'react'
-import { animated, useSpring, config as springConfig } from 'react-spring'
+import { animated, useSpring } from 'react-spring'
 import styled from 'styled-components'
 import { sortBy } from 'lodash-es'
 
@@ -14,10 +14,11 @@ const MenuContainer = styled(animated.nav)`
   background-color: ${colors.menuBackground};
   bottom: 0;
   position: fixed;
-  left: 0;
-  max-width: ${scale(35)};
+  left: ${scale(-5)};
+  padding-left: ${scale(5)};
+  max-width: ${scale(40)};
   top: 0;
-  width: 80%;
+  width: calc(80% + ${scale(5)});
   z-index: 11;
   will-change: transform;
 `
@@ -45,23 +46,18 @@ const ServersContainer = styled.div`
 `
 
 const Menu = () => {
-  const { isMenuOpen, setMenuOpen } = useMenuContext()
+  const { isMenuOpen, closeMenu } = useMenuContext()
   const { serversState } = useServerContext()
 
   const containerStyle = useSpring({
     transform: isMenuOpen ? 'translateX(0%)' : 'translateX(-100%)',
-    config: springConfig.stiff
+    config: { mass: 1, tension: 400, friction: 30 }
   })
 
   const backdropStyle = useSpring({
     opacity: isMenuOpen ? 1 : 0,
-    pointerEvents: isMenuOpen ? 'auto' : 'none',
-    config: springConfig.stiff
+    pointerEvents: isMenuOpen ? 'auto' : 'none'
   })
-
-  const handleBackdropClick = React.useCallback(() => {
-    setMenuOpen(false)
-  }, [setMenuOpen])
 
   const sortedServers = React.useMemo(() => {
     const servers = Object.values(serversState.servers)
@@ -70,12 +66,16 @@ const Menu = () => {
 
   return (
     <>
-      <Backdrop style={backdropStyle} onClick={handleBackdropClick} />
+      <Backdrop style={backdropStyle} onClick={closeMenu} />
       <MenuContainer style={containerStyle}>
         <MenuHeader>Devices</MenuHeader>
         <ServersContainer>
           {sortedServers.map(server => (
-            <MenuServer key={server.address} server={server} />
+            <MenuServer
+              key={server.address}
+              server={server}
+              onDeviceClick={closeMenu}
+            />
           ))}
         </ServersContainer>
       </MenuContainer>

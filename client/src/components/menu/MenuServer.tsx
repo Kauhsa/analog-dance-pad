@@ -14,6 +14,7 @@ import { faServer } from '@fortawesome/free-solid-svg-icons'
 
 interface Props {
   server: ServerState
+  onDeviceClick: () => void
 }
 
 const ServerLabel = styled.h2`
@@ -44,7 +45,7 @@ const DeviceLink = styled(NavLink)`
 const deviceUrl = (serverAddr: string, deviceId: string) =>
   `/${encodeURIComponent(serverAddr)}/${encodeURIComponent(deviceId)}`
 
-const MenuServer = React.memo<Props>(({ server }) => {
+const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
   if (server.connectionStatus !== ServerConnectionStatus.Connected) {
     return null
   }
@@ -56,7 +57,11 @@ const MenuServer = React.memo<Props>(({ server }) => {
         {server.address}
       </ServerLabel>
       {server.devices.map(device => (
-        <DeviceLink key={device.id} to={deviceUrl(server.address, device.id)}>
+        <DeviceLink
+          key={device.id}
+          to={deviceUrl(server.address, device.id)}
+          onClick={onDeviceClick}
+        >
           {device.configuration.name}
         </DeviceLink>
       ))}

@@ -2,9 +2,8 @@ import React from 'react'
 
 interface MenuContextValue {
   isMenuOpen: boolean
-  setMenuOpen: (
-    isMenuOpen: boolean | ((isMenuOpen: boolean) => boolean)
-  ) => void
+  openMenu: () => void
+  closeMenu: () => void
 }
 
 const MenuContext = React.createContext<MenuContextValue | null>(null)
@@ -12,14 +11,17 @@ const MenuContext = React.createContext<MenuContextValue | null>(null)
 export const MenuContextProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
-  const [isMenuOpen, setMenuOpen] = React.useState(true)
+  const [isMenuOpen, setIsMenuOpen] = React.useState(true)
+  const openMenu = React.useCallback(() => setIsMenuOpen(true), [])
+  const closeMenu = React.useCallback(() => setIsMenuOpen(false), [])
 
   const value = React.useMemo(
     () => ({
       isMenuOpen,
-      setMenuOpen
+      openMenu,
+      closeMenu
     }),
-    [isMenuOpen]
+    [closeMenu, isMenuOpen, openMenu]
   )
 
   return <MenuContext.Provider value={value}>{children}</MenuContext.Provider>
