@@ -19,6 +19,7 @@ const Container = styled(animated.div)`
   background: ${NOT_PRESSED_BACKGROUND};
   display: flex;
   white-space: nowrap;
+  margin: 0 ${scale(1)};
 `
 
 const Header = styled(animated.div)`

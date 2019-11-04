@@ -45,7 +45,7 @@ const DeviceButtons = React.memo<DeviceButtonsProps>(
 
     const displayedItems = buttons.length
 
-    const animationProps = useSpring({
+    const scalingContainerStyle = useSpring({
       transform: `translateX(${
         selectedButton === null
           ? '0%'
@@ -56,7 +56,7 @@ const DeviceButtons = React.memo<DeviceButtonsProps>(
 
     return (
       <Container>
-        <ScalingContainer style={animationProps}>
+        <ScalingContainer style={scalingContainerStyle}>
           {buttons.map((button, i) => (
             <Button
               key={button.buttonIndex}
