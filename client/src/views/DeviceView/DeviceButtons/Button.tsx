@@ -10,6 +10,9 @@ import {
   DeviceInputData
 } from '../../../../../common-types/device'
 import { useServerConnectionByAddr } from '../../../context/SocketContext'
+import { faArrowCircleLeft } from '@fortawesome/free-solid-svg-icons'
+import IconButton from '../../../components/IconButton'
+import { largeText } from '../../../components/Typography'
 
 const NOT_PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.buttonBottomColor} 0%, ${colors.buttonTopColor} 100%)`
 const PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.pressedButtonBottomColor} 0%, ${colors.pressedBottomTopColor} 100%)`
@@ -23,18 +26,30 @@ const Container = styled(animated.div)`
 `
 
 const Header = styled(animated.div)`
-  position: absolute;
+  align-items: center;
+  color: ${colors.text};
+  display: flex;
   left: ${scale(2)};
-  top: ${scale(1.5)};
+  position: absolute;
+  right: ${scale(2)};
+  top: ${scale(2)};
   z-index: 2;
 `
 
+const ButtonName = styled.div`
+  margin-left: ${scale(1)};
+  ${largeText};
+`
+
 const Sensors = styled.div`
+  position: absolute;
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  height: 100%;
-  width: 100%;
+  height: calc(100% - ${scale(10)});
+  bottom: 0;
+  left: 0;
+  right: 0;
 
   > * {
     margin: 0 2%;
@@ -55,8 +70,9 @@ const Button = React.memo<Props>(
   ({ selected, button, device, serverAddress, onSelect, onBack }) => {
     const serverConnection = useServerConnectionByAddr(serverAddress)
 
-    const interfaceElementsStyle = useSpring({
-      opacity: selected ? 1 : 0
+    const headerStyle = useSpring({
+      opacity: selected ? 0.75 : 0,
+      config: { duration: 100 }
     })
 
     const [pressedStyle, setPressedStyle] = useSpring(() => ({
@@ -91,9 +107,13 @@ const Button = React.memo<Props>(
         style={pressedStyle}
         onClick={!selected ? onSelect : undefined}
       >
-        <Header style={interfaceElementsStyle}>
-          <button onClick={onBack}>Back</button>
-          {button.buttonIndex}
+        <Header style={headerStyle}>
+          <IconButton
+            size={scale(4)}
+            onClick={onBack}
+            icon={faArrowCircleLeft}
+          />
+          <ButtonName>Button {button.buttonIndex}</ButtonName>
         </Header>
 
         <Sensors>

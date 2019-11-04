@@ -13,7 +13,7 @@ export const colors = {
   menuBackground: chroma(colorValues.darkBlue)
     .brighten(0.3)
     .css(),
-  menuBackdrop: 'rgba(0, 0, 0, 0.4)',
+  menuBackdrop: 'rgba(0, 0, 0, 0.5)',
   menuItem: chroma(colorValues.darkBlue)
     .brighten(0.5)
     .css(),

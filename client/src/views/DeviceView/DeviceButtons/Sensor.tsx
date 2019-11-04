@@ -135,7 +135,7 @@ const Sensor = React.memo<Props>(
 
     const thumbEnabledSpring = useSpring({
       opacity: enableThresholdChange ? 1 : 0,
-      config: springConfig.stiff
+      config: { duration: 100 }
     })
 
     const handleSensorThresholdUpdate = React.useCallback(

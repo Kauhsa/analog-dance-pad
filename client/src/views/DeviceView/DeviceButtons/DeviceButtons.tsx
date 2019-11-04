@@ -51,7 +51,8 @@ const DeviceButtons = React.memo<DeviceButtonsProps>(
           ? '0%'
           : toPercentage(-(selectedButton / displayedItems))
       }) scaleX(${selectedButton === null ? 1 / displayedItems : 1})`,
-      width: toPercentage(displayedItems)
+      width: toPercentage(displayedItems),
+      config: { mass: 1, tension: 500, friction: 50 }
     })
 
     return (

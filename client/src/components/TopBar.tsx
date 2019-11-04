@@ -2,10 +2,10 @@ import React from 'react'
 import styled from 'styled-components'
 import scale from '../utils/scale'
 import { useMenuContext } from '../context/MenuContext'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
-import { colors } from '../utils/colors'
 import { largeText } from './Typography'
+import IconButton from './IconButton'
+import { colors } from '../utils/colors'
 
 interface Props {
   title?: React.ReactNode
@@ -15,20 +15,17 @@ const Container = styled.div`
   height: ${scale(7)};
   display: flex;
   align-items: center;
+  color: ${colors.text};
 `
 
-const ButtonContainer = styled.button`
-  border: none;
-  outline: none;
-  color: ${colors.text};
+const OpenMenuButton = styled(IconButton)`
   flex-shrink: 1;
-  font-size: ${scale(3)};
-  padding: 0 ${scale(2)};
-  line-height: 1;
+  padding: ${scale(2)};
 `
 
 const Title = styled.h1`
   ${largeText};
+  line-height: 1;
 `
 
 const TopBar = React.memo<Props>(({ title }) => {
@@ -36,9 +33,7 @@ const TopBar = React.memo<Props>(({ title }) => {
 
   return (
     <Container>
-      <ButtonContainer onClick={openMenu}>
-        <FontAwesomeIcon icon={faBars} />
-      </ButtonContainer>
+      <OpenMenuButton onClick={openMenu} icon={faBars} size={scale(2.75)} />
       <Title>{title}</Title>
     </Container>
   )
