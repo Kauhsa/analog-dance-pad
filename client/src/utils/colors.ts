@@ -10,6 +10,13 @@ export const colorValues = {
 
 export const colors = {
   background: colorValues.darkBlue,
+  menuBackground: chroma(colorValues.darkBlue)
+    .brighten(0.3)
+    .css(),
+  menuBackdrop: 'rgba(0, 0, 0, 0.4)',
+  menuItem: chroma(colorValues.darkBlue)
+    .brighten(0.5)
+    .css(),
   buttonBottomColor: colorValues.blue,
   buttonTopColor: colorValues.lighterBlue,
   pressedButtonBottomColor: chroma(colorValues.blue)
@@ -22,5 +29,6 @@ export const colors = {
   thresholdBar: 'rgba(0, 0, 0, 0.15)',
   overThresholdBar: chroma(colorValues.yellow)
     .brighten(0.5)
-    .css()
+    .css(),
+  text: 'white'
 }

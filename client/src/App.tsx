@@ -9,6 +9,8 @@ import { colors } from './utils/colors'
 import { SocketContextProvider } from './context/SocketContext'
 import { BrowserRouter, Switch, Route } from 'react-router-dom'
 import DeviceView from './views/DeviceView/DeviceView'
+import Menu from './components/menu'
+import { MenuContextProvider } from './context/MenuContext'
 
 const AppContainer = styled.div`
   height: 100%;
@@ -21,7 +23,6 @@ const AppContainer = styled.div`
 const GlobalStyles = createGlobalStyle`
   html, body, #root {
     height: 100%;
-    
   }
 
   body {
@@ -46,17 +47,20 @@ const App = () => (
     <SocketContextProvider serverAddresses={SERVER_ADDRESSES}>
       <AppContainer>
         <BrowserRouter>
-          <Switch>
-            <Route
-              path="/:server/:device"
-              render={({ match }) => (
-                <DeviceView
-                  serverId={decodeURIComponent(match.params.server)}
-                  deviceId={decodeURIComponent(match.params.device)}
-                />
-              )}
-            />
-          </Switch>
+          <MenuContextProvider>
+            <Menu />
+            <Switch>
+              <Route
+                path="/:server/:device"
+                render={({ match }) => (
+                  <DeviceView
+                    serverId={decodeURIComponent(match.params.server)}
+                    deviceId={decodeURIComponent(match.params.device)}
+                  />
+                )}
+              />
+            </Switch>
+          </MenuContextProvider>
         </BrowserRouter>
       </AppContainer>
     </SocketContextProvider>
