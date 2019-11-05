@@ -42,29 +42,40 @@ const DeviceLink = styled(NavLink)`
   }
 `
 
+const Message = styled.div`
+  ${basicText};
+  display: block;
+  margin-left: ${scale(2)};
+`
+
 const deviceUrl = (serverAddr: string, deviceId: string) =>
   `/${encodeURIComponent(serverAddr)}/${encodeURIComponent(deviceId)}`
 
 const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
-  if (server.connectionStatus !== ServerConnectionStatus.Connected) {
-    return null
-  }
-
   return (
     <div>
       <ServerLabel>
         <FontAwesomeIcon icon={faServer} />
         {server.address}
       </ServerLabel>
-      {server.devices.map(device => (
-        <DeviceLink
-          key={device.id}
-          to={deviceUrl(server.address, device.id)}
-          onClick={onDeviceClick}
-        >
-          {device.configuration.name}
-        </DeviceLink>
-      ))}
+
+      {server.connectionStatus === ServerConnectionStatus.Connected ? (
+        server.devices.length > 0 ? (
+          server.devices.map(device => (
+            <DeviceLink
+              key={device.id}
+              to={deviceUrl(server.address, device.id)}
+              onClick={onDeviceClick}
+            >
+              {device.configuration.name}
+            </DeviceLink>
+          ))
+        ) : (
+          <Message>No devices connected to server!</Message>
+        )
+      ) : (
+        <Message>Not connected to server!</Message>
+      )}
     </div>
   )
 })
