@@ -18,6 +18,12 @@ const Button = styled.button<{ size: string; color: string }>`
   font-size: ${props => props.size};
   line-height: 1;
   padding: 0;
+  transform: scale(1);
+  transition: 100ms transform;
+
+  &:active {
+    transform: scale(0.8);
+  }
 `
 
 const IconButton = React.memo<Props>(

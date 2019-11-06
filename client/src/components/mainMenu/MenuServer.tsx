@@ -1,5 +1,5 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
 
 import {
@@ -52,6 +52,9 @@ const deviceUrl = (serverAddr: string, deviceId: string) =>
   `/${encodeURIComponent(serverAddr)}/${encodeURIComponent(deviceId)}`
 
 const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
+  // to properly update on location change.
+  useLocation()
+
   return (
     <div>
       <ServerLabel>

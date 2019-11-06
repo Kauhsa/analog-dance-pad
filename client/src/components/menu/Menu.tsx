@@ -1,27 +1,11 @@
 import React from 'react'
 import { animated, useSpring } from 'react-spring'
-import styled from 'styled-components'
-import { sortBy } from 'lodash-es'
+import styled, { css } from 'styled-components'
 
 import scale from '../../utils/scale'
 import { colors } from '../../utils/colors'
-import { useMenuContext } from '../../context/MenuContext'
-import { useServerContext } from '../../context/SocketContext'
-import { largeText } from '../Typography'
-import MenuServer from './MenuServer'
 
-const MenuContainer = styled(animated.nav)`
-  background-color: ${colors.menuBackground};
-  bottom: 0;
-  position: fixed;
-  left: ${scale(-5)};
-  padding-left: ${scale(5)};
-  max-width: ${scale(40)};
-  top: 0;
-  width: calc(80% + ${scale(5)});
-  z-index: 11;
-  will-change: transform;
-`
+const BACKDROP_Z_INDEX = 10
 
 const Backdrop = styled(animated.div)`
   background-color: ${colors.menuBackdrop};
@@ -30,57 +14,66 @@ const Backdrop = styled(animated.div)`
   position: fixed;
   right: 0;
   top: 0;
-  z-index: 10;
+  z-index: ${BACKDROP_Z_INDEX};
   will-change: opacity;
 `
 
-const MenuHeader = styled.h1`
-  ${largeText};
-  margin: ${scale(2)} ${scale(2)} 0 ${scale(2)};
+type MenuPosition = 'left' | 'right'
+
+const MenuContainer = styled(animated.nav)<{ position: MenuPosition }>`
+  background-color: ${colors.menuBackground};
+  bottom: 0;
+  position: fixed;
+  max-width: ${scale(40)};
+  top: 0;
+  width: calc(80% + ${scale(5)});
+  z-index: ${BACKDROP_Z_INDEX + 1};
+  will-change: transform;
+
+  ${props =>
+    props.position === 'left' &&
+    css`
+      left: ${scale(-5)};
+      padding-left: ${scale(5)};
+    `}
+
+  ${props =>
+    props.position === 'right' &&
+    css`
+      right: ${scale(-5)};
+      padding-right: ${scale(5)};
+    `}
 `
 
-const ServersContainer = styled.div`
-  > * {
-    margin-bottom: ${scale(5)};
-  }
-`
+interface Props {
+  isOpen: boolean
+  onClose: () => void
+  children?: React.ReactNode
+  position: MenuPosition
+}
 
-const Menu = () => {
-  const { isMenuOpen, closeMenu } = useMenuContext()
-  const { serversState } = useServerContext()
+const Menu = React.memo<Props>(({ isOpen, children, onClose, position }) => {
+  const closedTransform =
+    position === 'left' ? 'translateX(-100%)' : 'translateX(100%)'
 
   const containerStyle = useSpring({
-    transform: isMenuOpen ? 'translateX(0%)' : 'translateX(-100%)',
+    transform: isOpen ? 'translateX(0%)' : closedTransform,
     config: { mass: 1, tension: 400, friction: 30 }
   })
 
   const backdropStyle = useSpring({
-    opacity: isMenuOpen ? 1 : 0,
-    pointerEvents: isMenuOpen ? 'auto' : 'none'
+    opacity: isOpen ? 1 : 0,
+    pointerEvents: isOpen ? 'auto' : 'none'
   })
-
-  const sortedServers = React.useMemo(() => {
-    const servers = Object.values(serversState.servers)
-    return sortBy(servers, s => s.address)
-  }, [serversState.servers])
 
   return (
     <>
-      <Backdrop style={backdropStyle} onClick={closeMenu} />
-      <MenuContainer style={containerStyle}>
-        <MenuHeader>Devices</MenuHeader>
-        <ServersContainer>
-          {sortedServers.map(server => (
-            <MenuServer
-              key={server.address}
-              server={server}
-              onDeviceClick={closeMenu}
-            />
-          ))}
-        </ServersContainer>
+      <Backdrop style={backdropStyle} onClick={onClose} />
+      <MenuContainer position={position} style={containerStyle}>
+        {children}
       </MenuContainer>
     </>
   )
-}
+})
 
 export default Menu

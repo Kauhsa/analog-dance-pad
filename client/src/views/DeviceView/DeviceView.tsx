@@ -4,7 +4,9 @@ import { ServerConnectionStatus } from '../../stateHooks/useServerState'
 import DeviceButtons from './DeviceButtons/DeviceButtons'
 import IconAndTextPage from '../../components/IconAndTextPage'
 import { faPoo, faPlug, faGamepad } from '@fortawesome/free-solid-svg-icons'
-import TopBar from '../../components/TopBar'
+import TopBar from '../../components/topBar/TopBar'
+import TopBarTitle from '../../components/topBar/TopBarTitle'
+import DeviceConfiguration from './DeviceConfiguration'
 
 interface Props {
   serverId: string
@@ -37,7 +39,10 @@ const DeviceView: React.FC<Props> = ({ serverId, deviceId }) => {
 
   return (
     <>
-      <TopBar title={device.configuration.name} />
+      <TopBar>
+        <TopBarTitle>{device.configuration.name}</TopBarTitle>
+        <DeviceConfiguration />
+      </TopBar>
       <DeviceButtons serverAddress={serverId} device={device} />
     </>
   )

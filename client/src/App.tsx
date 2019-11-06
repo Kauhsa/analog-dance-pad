@@ -9,8 +9,8 @@ import { colors } from './utils/colors'
 import { SocketContextProvider } from './context/SocketContext'
 import { BrowserRouter, Switch, Route } from 'react-router-dom'
 import DeviceView from './views/DeviceView/DeviceView'
-import Menu from './components/menu'
 import { MenuContextProvider } from './context/MenuContext'
+import MainMenu from './components/mainMenu/MainMenu'
 
 const AppContainer = styled.div`
   height: 100%;
@@ -48,7 +48,7 @@ const App = () => (
       <AppContainer>
         <BrowserRouter>
           <MenuContextProvider>
-            <Menu />
+            <MainMenu />
             <Switch>
               <Route
                 path="/:server/:device"
