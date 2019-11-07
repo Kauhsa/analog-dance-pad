@@ -113,7 +113,7 @@ const Button = React.memo<Props>(
             onClick={onBack}
             icon={faArrowCircleLeft}
           />
-          <ButtonName>Button {button.buttonIndex}</ButtonName>
+          <ButtonName>Button {button.buttonIndex + 1}</ButtonName>
         </Header>
 
         <Sensors>
