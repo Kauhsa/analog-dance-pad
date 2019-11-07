@@ -6,7 +6,7 @@ import IconAndTextPage from '../../components/IconAndTextPage'
 import { faPoo, faPlug, faGamepad } from '@fortawesome/free-solid-svg-icons'
 import TopBar from '../../components/topBar/TopBar'
 import TopBarTitle from '../../components/topBar/TopBarTitle'
-import DeviceConfiguration from './DeviceConfiguration'
+import DeviceConfigurationMenu from './deviceConfiguration/DeviceConfigurationMenu'
 
 interface Props {
   serverId: string
@@ -41,7 +41,7 @@ const DeviceView: React.FC<Props> = ({ serverId, deviceId }) => {
     <>
       <TopBar>
         <TopBarTitle>{device.configuration.name}</TopBarTitle>
-        <DeviceConfiguration />
+        <DeviceConfigurationMenu serverAddr={server.address} device={device} />
       </TopBar>
       <DeviceButtons serverAddress={serverId} device={device} />
     </>

@@ -7,6 +7,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.11.2",
     "@fortawesome/react-fontawesome": "^0.1.7",
     "chroma-js": "^2.1.0",
+    "formik": "^2.0.3",
     "immer": "^5.0.0",
     "lodash-es": "^4.17.15",
     "react": "^16.11.0",

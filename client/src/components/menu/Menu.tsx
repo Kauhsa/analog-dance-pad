@@ -4,6 +4,7 @@ import styled, { css } from 'styled-components'
 
 import scale from '../../utils/scale'
 import { colors } from '../../utils/colors'
+import useFreeze from '../../utils/useFreeze'
 
 const BACKDROP_Z_INDEX = 10
 
@@ -29,6 +30,7 @@ const MenuContainer = styled(animated.nav)<{ position: MenuPosition }>`
   width: calc(80% + ${scale(5)});
   z-index: ${BACKDROP_Z_INDEX + 1};
   will-change: transform;
+  overflow-y: auto;
 
   ${props =>
     props.position === 'left' &&
@@ -66,11 +68,17 @@ const Menu = React.memo<Props>(({ isOpen, children, onClose, position }) => {
     pointerEvents: isOpen ? 'auto' : 'none'
   })
 
+  const frozenChildren = useFreeze(children, !isOpen)
+
   return (
     <>
       <Backdrop style={backdropStyle} onClick={onClose} />
-      <MenuContainer position={position} style={containerStyle}>
-        {children}
+      <MenuContainer
+        position={position}
+        style={containerStyle}
+        tabIndex={isOpen ? undefined : -1}
+      >
+        {frozenChildren}
       </MenuContainer>
     </>
   )
