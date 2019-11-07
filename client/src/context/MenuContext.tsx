@@ -11,7 +11,7 @@ const MenuContext = React.createContext<MenuContextValue | null>(null)
 export const MenuContextProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(true)
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const openMenu = React.useCallback(() => setIsMenuOpen(true), [])
   const closeMenu = React.useCallback(() => setIsMenuOpen(false), [])
 

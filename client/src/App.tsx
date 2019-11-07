@@ -11,6 +11,7 @@ import { BrowserRouter, Switch, Route } from 'react-router-dom'
 import DeviceView from './views/DeviceView/DeviceView'
 import { MenuContextProvider } from './context/MenuContext'
 import MainMenu from './components/mainMenu/MainMenu'
+import LandingView from './views/LandingView'
 
 const AppContainer = styled.div`
   height: 100%;
@@ -59,6 +60,8 @@ const App = () => (
                   />
                 )}
               />
+
+              <Route component={LandingView}></Route>
             </Switch>
           </MenuContextProvider>
         </BrowserRouter>
