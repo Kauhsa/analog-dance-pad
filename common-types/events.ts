@@ -6,12 +6,12 @@ export namespace ServerEvents {
   export type DevicesUpdated = {
     devices: DeviceDescription[]
   }
-  
+
   export type EventRate = {
     deviceId: string
     eventRate: number
   }
-  
+
   export type InputEvent = {
     deviceId: string
     inputData: DeviceInputData
@@ -27,22 +27,35 @@ export namespace ClientEvents {
     deviceId: string
     configuration: Partial<DeviceConfiguration>
   }
-  
+
   export type SubscribeToDevice = {
     deviceId: string
   }
-  
+
   export type UnsubscribeFromDevice = {
     deviceId: string
   }
-  
+
   export type SaveConfiguration = {
     deviceId: string
   }
-  
+
   export type UpdateSensorThreshold = {
     deviceId: string
     sensorIndex: number,
     newThreshold: number
+  }
+
+  export type StartOrUpdateCalibration = {
+    deviceId: string,
+    calibrationBuffer: number
+  }
+
+  export type CancelCalibration = {
+    deviceId: string
+  }
+
+  export type SaveCalibration = {
+    deviceId: string
   }
 } 

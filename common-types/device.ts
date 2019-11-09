@@ -12,10 +12,15 @@ export interface DeviceProperties {
   sensorCount: number
 }
 
+export interface DeviceCalibrationStatus {
+  calibrationBuffer: number
+}
+
 export interface DeviceDescription {
   id: string
   configuration: DeviceConfiguration
   properties: DeviceProperties
+  calibration: DeviceCalibrationStatus | null
 }
 
 export interface DeviceInputData {

@@ -5,7 +5,8 @@ export const colorValues = {
   blue: '#2364AA',
   lightBlue: '#1791EA',
   lighterBlue: '#46C7FE',
-  yellow: '#FEE501'
+  yellow: '#FEE501',
+  white: '#FFFFFF'
 }
 
 export const colors = {
