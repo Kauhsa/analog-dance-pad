@@ -200,7 +200,10 @@ export class Teensy2DeviceDriver extends ExtendableEmitter<DeviceDriverEvents>()
     usbDetection.on('add', (device: { vendorId: number; productId: number }) => {
       if (device.vendorId === VENDOR_ID && device.productId === PRODUCT_ID) {
         consola.info('New Teensy2Driver devices detected, connecting...')
-        this.connectToNewDevices()
+
+        // OSX seems to want to wait a while until it can find the new HID
+        // device, so let's wait a while.
+        setTimeout(() => this.connectToNewDevices(), 1000)
       }
     })
     usbDetection.startMonitoring()
