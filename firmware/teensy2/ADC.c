@@ -3,8 +3,20 @@
 
 #include "Config/DancePadConfig.h"
 
+// see page 308 of https://cdn.sparkfun.com/datasheets/Dev/Arduino/Boards/ATMega32U4.pdf for these
 static const uint8_t sensorToAnalogPin[12] = {
-    0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+    0b000000,
+    0b000001,
+    0b000100,
+    0b000101,
+    0b000110,
+    0b000111,
+    0b100000,
+    0b100001,
+    0b100010,
+    0b100011,
+    0b100100,
+    0b100101
 };
 
 #if ADC_TEST_MODE
@@ -23,9 +35,9 @@ void ADC_Init(void) {
 uint16_t ADC_Read(uint8_t sensor) {
     uint8_t pin = sensorToAnalogPin[sensor];
 
-    // pin selection is, annoyingly, in 2 different registers
-    ADMUX = (ADMUX & 0b11111000) | (pin & 0b00000111); // select channel (MUX0-4 bits, though we only need MUX2-4)
-    ADCSRB = (ADCSRB & 0x11011111) | ((pin & 0x00001000) << 2); // select channel (MUX5 bit)
+    // see: https://www.avrfreaks.net/comment/885267#comment-885267
+    ADMUX = (ADMUX & 0xE0) | (pin & 0x1F); // select channel (MUX0-4 bits)
+    ADCSRB = (ADCSRB & 0xDF) | (pin & 0x20); // select channel (MUX5 bit) 
 
     ADCSRA |= (1 << ADSC); // start conversion
     while (ADCSRA & (1 << ADSC)) {}; // wait until done
