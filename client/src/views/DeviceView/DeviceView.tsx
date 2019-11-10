@@ -24,7 +24,7 @@ const DeviceView: React.FC<Props> = ({ serverId, deviceId }) => {
     )
   }
 
-  const device = server.devices.find(device => device.id === deviceId)
+  const device = server.devices[deviceId]
 
   if (!device) {
     return (

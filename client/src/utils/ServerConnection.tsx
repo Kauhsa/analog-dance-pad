@@ -5,15 +5,15 @@ import { ServerEvents, ClientEvents } from '../../../common-types/events'
 
 import {
   DeviceConfiguration,
-  DeviceDescription,
-  DeviceInputData
+  DeviceInputData,
+  DeviceDescriptionMap
 } from '../../../common-types/device'
 
 interface ServerConnectionSettings {
   address: string
   onConnect: () => void
   onDisconnect: () => void
-  onDevicesUpdated: (event: DeviceDescription[]) => void
+  onDevicesUpdated: (devices: DeviceDescriptionMap) => void
 }
 
 class ServerConnection {

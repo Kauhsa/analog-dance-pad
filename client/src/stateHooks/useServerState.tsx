@@ -1,7 +1,7 @@
 import React from 'react'
 import produce from 'immer'
 
-import { DeviceDescription } from '../../../common-types/device'
+import { DeviceDescriptionMap } from '../../../common-types/device'
 
 export enum ServerConnectionStatus {
   Connected = 'connected',
@@ -15,7 +15,7 @@ interface BaseServerState {
 
 interface ConnectedServerState extends BaseServerState {
   connectionStatus: ServerConnectionStatus.Connected
-  devices: DeviceDescription[]
+  devices: DeviceDescriptionMap
 }
 
 interface DisconnectedServerState extends BaseServerState {
@@ -36,7 +36,7 @@ type ServerReducerAction =
   | {
       type: 'devicesUpdated'
       address: string
-      devices: DeviceDescription[]
+      devices: DeviceDescriptionMap
     }
 
 export type ServersState = {
@@ -51,7 +51,7 @@ const serverReducer: React.Reducer<ServersState, ServerReducerAction> = produce(
       draft.servers[address] = {
         connectionStatus: ServerConnectionStatus.Connected,
         address: action.address,
-        devices: []
+        devices: {}
       }
     }
 

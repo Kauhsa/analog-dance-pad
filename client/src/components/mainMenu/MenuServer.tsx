@@ -1,6 +1,7 @@
 import React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
+import { isEmpty, map } from 'lodash'
 
 import {
   ServerConnectionStatus,
@@ -63,8 +64,10 @@ const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
       </ServerLabel>
 
       {server.connectionStatus === ServerConnectionStatus.Connected ? (
-        server.devices.length > 0 ? (
-          server.devices.map(device => (
+        isEmpty(server.devices) ? (
+          <Message>No devices connected to server!</Message>
+        ) : (
+          map(server.devices, device => (
             <DeviceLink
               key={device.id}
               to={deviceUrl(server.address, device.id)}
@@ -73,8 +76,6 @@ const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
               {device.configuration.name}
             </DeviceLink>
           ))
-        ) : (
-          <Message>No devices connected to server!</Message>
         )
       ) : (
         <Message>Not connected to server!</Message>

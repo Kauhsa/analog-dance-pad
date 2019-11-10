@@ -27,3 +27,5 @@ export interface DeviceInputData {
   sensors: number[]
   buttons: boolean[]
 }
+
+export type DeviceDescriptionMap = { [deviceId: string]: DeviceDescription }

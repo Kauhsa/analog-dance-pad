@@ -4,7 +4,7 @@ import { ServerEvents, ClientEvents } from '../../common-types/events'
 import { Device } from './driver/Device'
 import { DeviceDriver } from './driver/Driver'
 import { DeviceInputData } from '../../common-types/device'
-import { clamp } from 'lodash'
+import { clamp, mapValues } from 'lodash'
 
 const SECOND_AS_NS = BigInt(1e9)
 const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(20) // 20hz
@@ -39,7 +39,7 @@ const createServer = (params: Params) => {
   /* Handlers */
 
   const getDevicesUpdatedEvent = (): ServerEvents.DevicesUpdated => ({
-    devices: Object.values(deviceDataById).map(deviceData => ({
+    devices: mapValues(deviceDataById, deviceData => ({
       id: deviceData.id,
       configuration: deviceData.device.configuration,
       properties: deviceData.device.properties,

@@ -1,10 +1,10 @@
-import { DeviceConfiguration, DeviceDescription, DeviceInputData } from './device'
+import { DeviceConfiguration, DeviceInputData, DeviceDescriptionMap } from './device'
 
 // events from server
 export namespace ServerEvents {
   // from server
   export type DevicesUpdated = {
-    devices: DeviceDescription[]
+    devices: DeviceDescriptionMap
   }
 
   export type EventRate = {
