@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import { animated, useSpring } from 'react-spring'
 
 import scale from '../../../utils/scale'
-import useFreeze from '../../../utils/useFreeze'
 import IconButton from '../../../components/IconButton'
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { largeText } from '../../../components/Typography'
@@ -89,7 +88,7 @@ const CalibrationButton = styled(IconButton).attrs({
 
 interface Props {
   enabled: boolean
-  calibrationBuffer: number
+  calibrationBuffer: number | null
   onCancel: () => void
   onSave: () => void
   onChange: (value: number) => void
@@ -97,24 +96,23 @@ interface Props {
 
 const Calibration = React.memo<Props>(
   ({ enabled, calibrationBuffer, onSave, onCancel, onChange }) => {
-    const [sliderValue, setSliderValue] = React.useState(calibrationBuffer)
     const isMovingSlider = React.useRef(false)
 
+    // we have two different variables for the same value:
+    // - calibrationBuffer for one that comes from the server
+    // - sliderValue for the current value for slider
+    const [sliderValue, setSliderValue] = React.useState(0)
+
+    // update slider value if we're not currently dragging slider and
+    // the calibration is enabled in the first place.
     React.useEffect(() => {
-      if (!isMovingSlider) {
+      if (!isMovingSlider.current && calibrationBuffer !== null && enabled) {
         setSliderValue(calibrationBuffer)
       }
     }, [calibrationBuffer, enabled])
 
-    const handleUpdate = React.useCallback(
-      (value: number) => {
-        onChange(value)
-      },
-      [onChange]
-    )
-
     const [debouncedChange, cancelDebouncedChange] = useDebouncedCallback(
-      handleUpdate,
+      onChange,
       100,
       { maxWait: 250 }
     )
@@ -134,31 +132,11 @@ const Calibration = React.memo<Props>(
 
     const handleEndChange = React.useCallback(
       (e: any) => {
-        isMovingSlider.current = false
         cancelDebouncedChange()
-        handleUpdate(parseFloat(e.target.value))
+        isMovingSlider.current = false
+        onChange(parseFloat(e.target.value))
       },
-      [cancelDebouncedChange, handleUpdate]
-    )
-
-    const contents = enabled && (
-      <CalibrationBox>
-        <CalibrationBuffer>{(sliderValue * 100).toFixed(1)}</CalibrationBuffer>
-        <Slider
-          type="range"
-          min={0}
-          max={0.25}
-          step={0.001}
-          onChange={handleChange}
-          value={sliderValue}
-          onMouseUp={handleStartChange}
-          onMouseDown={handleEndChange}
-          onTouchStart={handleStartChange}
-          onTouchEnd={handleEndChange}
-        />
-        <CalibrationButton icon={faCheck} onClick={onSave} color="green" />
-        <CalibrationButton icon={faTimes} onClick={onCancel} color="red" />
-      </CalibrationBox>
+      [cancelDebouncedChange, onChange]
     )
 
     const calibrationBackdropStyle = useSpring({
@@ -181,7 +159,25 @@ const Calibration = React.memo<Props>(
           onClick={onCancel}
         />
         <CalibrationContainer style={calibrationContainerStyle}>
-          {useFreeze(contents, !enabled)}
+          <CalibrationBox>
+            <CalibrationBuffer>
+              {(sliderValue * 100).toFixed(1)}
+            </CalibrationBuffer>
+            <Slider
+              type="range"
+              min={0}
+              max={0.25}
+              step={0.001}
+              onChange={handleChange}
+              value={sliderValue}
+              onMouseUp={handleStartChange}
+              onMouseDown={handleEndChange}
+              onTouchStart={handleStartChange}
+              onTouchEnd={handleEndChange}
+            />
+            <CalibrationButton icon={faCheck} onClick={onSave} color="green" />
+            <CalibrationButton icon={faTimes} onClick={onCancel} color="red" />
+          </CalibrationBox>
         </CalibrationContainer>
       </>
     )

@@ -95,7 +95,7 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
       <Calibration
         enabled={device.calibration !== null}
         calibrationBuffer={
-          (device.calibration && device.calibration.calibrationBuffer) || 0
+          device.calibration && device.calibration.calibrationBuffer
         }
         onSave={handleSaveCalibration}
         onCancel={handleCancelCalibration}
