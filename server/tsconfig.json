@@ -3,16 +3,21 @@
     "incremental": true,
     "target": "es2018",
     "module": "commonjs",
-    "lib": ["es2018"],
+    "lib": [
+      "es2018"
+    ],
     "outDir": "./dist",
     "strict": true,
     "moduleResolution": "node",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
-   "include": [
-     "src/"
-   ],
-   "references": [
-    { "path": "../common-types" }
-   ]
+  "include": [
+    "src/"
+  ],
+  "references": [
+    {
+      "path": "../common-types"
+    }
+  ]
 }
