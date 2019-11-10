@@ -1,5 +1,4 @@
 import io from 'socket.io-client'
-import { pull } from 'lodash-es'
 
 import { ServerEvents, ClientEvents } from '../../../common-types/events'
 
@@ -20,7 +19,7 @@ class ServerConnection {
   private ioSocket: SocketIOClient.Socket
 
   private inputEventSubscribers: {
-    [deviceId: string]: Array<(inputData: DeviceInputData) => void>
+    [deviceId: string]: Set<(inputData: DeviceInputData) => void>
   }
 
   constructor(settings: ServerConnectionSettings) {
@@ -44,7 +43,7 @@ class ServerConnection {
       return
     }
 
-    for (const subscriber of currentSubscribers) {
+    for (const subscriber of currentSubscribers.values()) {
       subscriber(event.inputData)
     }
   }
@@ -68,10 +67,10 @@ class ServerConnection {
     if (this.inputEventSubscribers[deviceId] === undefined) {
       // if there are no other subscribers for this device, subscribe to events
       this.subscribeToDevice(deviceId)
-      this.inputEventSubscribers[deviceId] = [callback]
+      this.inputEventSubscribers[deviceId] = new Set([callback])
     } else {
       // if there are other subscriptions, just push the callback to list
-      this.inputEventSubscribers[deviceId].push(callback)
+      this.inputEventSubscribers[deviceId].add(callback)
     }
 
     // unsubscription function
@@ -81,10 +80,10 @@ class ServerConnection {
       }
 
       // remove callback from subscribers
-      pull(this.inputEventSubscribers[deviceId], callback)
+      this.inputEventSubscribers[deviceId].delete(callback)
 
       // if this was last subscriber, unsubscribe and remove the whole subscriber list
-      if (this.inputEventSubscribers[deviceId].length === 0) {
+      if (this.inputEventSubscribers[deviceId].size === 0) {
         this.unsubscribeFromDevice(deviceId)
         delete this.inputEventSubscribers[deviceId]
       }
