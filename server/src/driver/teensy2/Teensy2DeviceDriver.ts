@@ -19,7 +19,89 @@ const BUTTON_COUNT = 16
 
 const reportManager = new ReportManager({ buttonCount: BUTTON_COUNT, sensorCount: SENSOR_COUNT })
 
-const MAX_SENSOR_VALUE = 1024
+const MAX_SENSOR_VALUE = 850 // Maximum value for a sensor reading. Depends on the used resistors in the setup.
+const NTH_DEGREE_COEFFICIENT = 0.9 // Magic number
+const FIRST_DEGREE_COEFFICIENT = 0.1 // Magic number jr.
+const LINEARIZATION_POWER = 4 // The linearization function degree / power
+
+const LINEARIZATION_MAX_VALUE = Math.pow(MAX_SENSOR_VALUE, LINEARIZATION_POWER) / MAX_SENSOR_VALUE
+
+const calculateLinearizationValue = (value: number): number => {
+  const linearizedValue = Math.pow(value, LINEARIZATION_POWER) / LINEARIZATION_MAX_VALUE
+  return (
+    linearizedValue * NTH_DEGREE_COEFFICIENT + Math.round(value * FIRST_DEGREE_COEFFICIENT)
+  )
+}
+
+interface LinearizationValue {
+  [key: string]: number
+}
+
+const LINEARIZATION_LOOKUP_TABLE: LinearizationValue = {}
+const DELINEARIZATION_LOOKUP_TABLE: LinearizationValue = {}
+const DELINEARIZATION_LOOKUP_DIGITS = 12
+
+for (let i = MAX_SENSOR_VALUE; i >= 0; i--) {
+  const linearizedValue = calculateLinearizationValue(i)
+  LINEARIZATION_LOOKUP_TABLE[i] = linearizedValue
+  DELINEARIZATION_LOOKUP_TABLE[Math.floor(linearizedValue)] = i
+  DELINEARIZATION_LOOKUP_TABLE[linearizedValue.toFixed(DELINEARIZATION_LOOKUP_DIGITS)] = i
+}
+
+/* For testing
+for (let i = 0; i <= MAX_SENSOR_VALUE; i++) {
+  console.log(
+    'raw: ',
+    i,
+    ', linearized: ',
+    LINEARIZATION_LOOKUP_TABLE[i],
+    ', delinearized: ',
+    DELINEARIZATION_LOOKUP_TABLE[
+      LINEARIZATION_LOOKUP_TABLE[i].toFixed(DELINEARIZATION_LOOKUP_DIGITS)
+    ]
+  )
+}
+*/
+
+/* For if we ever want to not rely on the lookup tables
+
+for (let i = MAX_SENSOR_VALUE; i >= 0; i--) {
+  LINEARIZATION_RAW_PARTS[Math.floor(linearizeValue(i))] = getLinearizationRawPart(i)
+}
+
+const delinearizeValue = (value: number): number => {
+  if (value > MAX_SENSOR_VALUE) value = MAX_SENSOR_VALUE
+
+  let rawPart = -1
+
+  let x: number = 0
+
+  while (rawPart < 0) {
+    if (typeof LINEARIZATION_RAW_PARTS[(Math.floor(value) - x).toString()] !== 'undefined') {
+      rawPart = LINEARIZATION_RAW_PARTS[(Math.floor(value) - x).toString()]
+    }
+    x++
+  }
+
+  const linearizedPart = Math.pow(
+    ((value - rawPart) / LINEARIZED_VALUE_WEIGHT) * LINEARIZATION_MAX_VALUE,
+    1.0 / LINEARIZATION_POWER
+  )
+
+  return Math.floor(linearizedPart)
+}
+*/
+
+const linearizeValue = (value: number) => {
+  return LINEARIZATION_LOOKUP_TABLE[value]
+}
+
+const delinearizeValue = (value: number) => {
+  return DELINEARIZATION_LOOKUP_TABLE[value]
+}
+
+const linearizeSensorValues = (numbers: number[]) => numbers.map(linearizeValue)
+const delinearizeSensorValues = (numbers: number[]) => numbers.map(delinearizeValue)
 const normalizeSensorValues = (numbers: number[]) => numbers.map(n => n / MAX_SENSOR_VALUE)
 const denormalizeSensorValues = (numbers: number[]) =>
   numbers.map(n => Math.floor(n * MAX_SENSOR_VALUE))
@@ -58,7 +140,9 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
       const configuration: DeviceConfiguration = {
         name: nameReport.name,
-        sensorThresholds: normalizeSensorValues(padConfigurationReport.sensorThresholds),
+        sensorThresholds: normalizeSensorValues(
+          linearizeSensorValues(padConfigurationReport.sensorThresholds)
+        ),
         releaseThreshold: padConfigurationReport.releaseThreshold,
         sensorToButtonMapping: padConfigurationReport.sensorToButtonMapping
       }
@@ -103,7 +187,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
 
     this.emit('inputData', {
       buttons: inputReport.buttons,
-      sensors: normalizeSensorValues(inputReport.sensorValues)
+      sensors: normalizeSensorValues(linearizeSensorValues(inputReport.sensorValues))
     })
   }
 
@@ -131,7 +215,9 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     await this.sendEventToQueue(async () => {
       const report = reportManager.createConfigurationReport({
         releaseThreshold: newConfiguration.releaseThreshold,
-        sensorThresholds: denormalizeSensorValues(newConfiguration.sensorThresholds),
+        sensorThresholds: delinearizeSensorValues(
+          denormalizeSensorValues(newConfiguration.sensorThresholds)
+        ),
         sensorToButtonMapping: newConfiguration.sensorToButtonMapping
       })
       this.device.sendFeatureReport(report)
