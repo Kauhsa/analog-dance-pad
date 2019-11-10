@@ -66,7 +66,11 @@ const ConfigurationForm = React.memo<Props>(({ device, onSubmit }) => {
   )
 
   return (
-    <Formik<FormValues> initialValues={initialValues} onSubmit={handleSubmit}>
+    <Formik<FormValues>
+      enableReinitialize={true}
+      initialValues={initialValues}
+      onSubmit={handleSubmit}
+    >
       {({ handleSubmit }) => (
         <Form onSubmit={handleSubmit}>
           <Label>

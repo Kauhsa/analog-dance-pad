@@ -16,12 +16,10 @@ interface Props {
 
 const DeviceConfigurationMenu = React.memo<Props>(
   ({ device, onClose, onSave, isOpen }) => (
-    <>
-      <Menu isOpen={isOpen} position="right" onClose={onClose}>
-        <MenuHeader>Configuration</MenuHeader>
-        <ConfigurationForm device={device} onSubmit={onSave} />
-      </Menu>
-    </>
+    <Menu isOpen={isOpen} position="right" onClose={onClose}>
+      <MenuHeader>Configuration</MenuHeader>
+      <ConfigurationForm device={device} onSubmit={onSave} />
+    </Menu>
   )
 )
 
