@@ -1,6 +1,7 @@
 import * as HID from 'node-hid'
 import usbDetection from 'usb-detection'
 import consola from 'consola'
+import PQueue from 'p-queue'
 
 import { DeviceProperties, DeviceConfiguration } from '../../../../common-types/device'
 import { DeviceDriver, DeviceDriverEvents } from '../Driver'
@@ -29,6 +30,7 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
   private onClose: () => void
   private eventsSinceLastUpdate: number
   private eventRateInterval: NodeJS.Timeout
+  private sendQueue: PQueue
 
   id: string
 
@@ -85,6 +87,9 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     // initialize event rate tracking
     this.eventRateInterval = setInterval(this.handleEventRateMeasurement, 1000)
     this.eventsSinceLastUpdate = 0
+
+    // initialize send queue
+    this.sendQueue = new PQueue({ concurrency: 1 })
   }
 
   private handleError = (e: Error) => {
@@ -107,40 +112,51 @@ export class Teensy2Device extends ExtendableEmitter<DeviceEvents>() implements 
     this.eventsSinceLastUpdate = 0
   }
 
-  private async sendMultipleFeatureReports(...reports: number[][]) {
-    for (const report of reports) {
-      this.device.sendFeatureReport(report)
-
-      // for whatever reason, sending two feature reports too soon crashes on linux half of the
-      // time (sigh). but we can avoid that...
-      await delay(5)
-    }
+  // What's the idea here? Well - node-hid doesn't like if we do multiple
+  // different things (send feature reports, write data) to the same device
+  // within same millisecond, because USB spec doesn't allow that. So we battle
+  // this by putting all writes and feature report requests to a queue where
+  // there will always be at least some milliseconds between events.
+  private sendEventToQueue = async <T>(event: () => Promise<T>): Promise<T> => {
+    const promise = this.sendQueue.add(() => event())
+    this.sendQueue.add(() => delay(2))
+    return await promise
   }
 
   public async updateConfiguration(updates: Partial<DeviceConfiguration>) {
     const newConfiguration = { ...this.configuration, ...updates }
 
     // TODO: only send configuration reports that are necessary
-    this.sendMultipleFeatureReports(
-      reportManager.createConfigurationReport({
+
+    await this.sendEventToQueue(async () => {
+      const report = reportManager.createConfigurationReport({
         releaseThreshold: newConfiguration.releaseThreshold,
         sensorThresholds: denormalizeSensorValues(newConfiguration.sensorThresholds),
         sensorToButtonMapping: newConfiguration.sensorToButtonMapping
-      }),
-      reportManager.createNameReport({ name: newConfiguration.name })
-    )
+      })
+      this.device.sendFeatureReport(report)
+    })
+
+    await this.sendEventToQueue(async () => {
+      const report = reportManager.createNameReport({ name: newConfiguration.name })
+      this.device.sendFeatureReport(report)
+    })
 
     this.configuration = newConfiguration
   }
 
   public async saveConfiguration() {
-    this.device.write(reportManager.createSaveConfigurationReport())
+    await this.sendEventToQueue(async () => {
+      this.device.write(reportManager.createSaveConfigurationReport())
+    })
   }
 
   close() {
     clearInterval(this.eventRateInterval)
-    this.onClose()
+    this.sendQueue.pause()
+    this.sendQueue.clear()
     this.device.close()
+    this.onClose()
     this.emit('disconnect')
   }
 }

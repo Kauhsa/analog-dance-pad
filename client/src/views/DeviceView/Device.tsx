@@ -40,7 +40,7 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
         return
       }
 
-      serverConnection.updateConfiguration(device.id, conf)
+      serverConnection.updateConfiguration(device.id, conf, true)
       closeConfigurationMenu()
     },
     [closeConfigurationMenu, device.id, serverConnection]

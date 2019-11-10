@@ -146,7 +146,6 @@ const createServer = (params: Params) => {
   const handleEventRate = (deviceId: string, rate: number) => {
     const event: ServerEvents.EventRate = { deviceId: deviceId, eventRate: rate }
     params.socketIOServer.to(deviceId).emit('eventRate', event)
-    consola.info(`Event rate with device "${deviceId}" is ${rate}`)
   }
 
   /* Start server. */
@@ -173,8 +172,14 @@ const createServer = (params: Params) => {
     })
 
     socket.on('updateConfiguration', async (data: ClientEvents.UpdateConfiguration) => {
-      await deviceDataById[data.deviceId].device.updateConfiguration(data.configuration)
+      const device = deviceDataById[data.deviceId].device
+
+      await device.updateConfiguration(data.configuration)
+      if (data.store) {
+        await device.saveConfiguration()
+      }
       broadcastDevicesUpdated()
+
       consola.info(`Device id "${data.deviceId}" configuration updated`, data.configuration)
     })
 
@@ -188,6 +193,9 @@ const createServer = (params: Params) => {
       sensorThresholds[data.sensorIndex] = data.newThreshold
 
       await device.updateConfiguration({ sensorThresholds })
+      if (data.store) {
+        await device.saveConfiguration()
+      }
       broadcastDevicesUpdated()
 
       consola.info(
@@ -224,15 +232,16 @@ const createServer = (params: Params) => {
       await deviceData.device.updateConfiguration({
         sensorThresholds: deviceData.calibration.sensorThresholdsBeforeStartingCalibration
       })
+
       deviceData.calibration = null
       broadcastDevicesUpdated()
     })
 
-    socket.on('saveCalibration', (data: ClientEvents.SaveCalibration) => {
+    socket.on('saveCalibration', async (data: ClientEvents.SaveCalibration) => {
       const deviceData = deviceDataById[data.deviceId]
       deviceData.calibration = null
+      await deviceData.device.saveConfiguration()
       broadcastDevicesUpdated()
-      // TODO: save configuration?
     })
 
     socket.on('disconnect', (reason: string) => {

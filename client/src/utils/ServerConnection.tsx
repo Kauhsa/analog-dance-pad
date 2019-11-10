@@ -93,11 +93,13 @@ class ServerConnection {
 
   updateConfiguration = (
     deviceId: string,
-    configuration: Partial<DeviceConfiguration>
+    configuration: Partial<DeviceConfiguration>,
+    store: boolean
   ) => {
     const event: ClientEvents.UpdateConfiguration = {
       deviceId,
-      configuration
+      configuration,
+      store
     }
 
     this.ioSocket.emit('updateConfiguration', event)
@@ -106,12 +108,14 @@ class ServerConnection {
   updateSensorThreshold = (
     deviceId: string,
     sensorIndex: number,
-    newThreshold: number
+    newThreshold: number,
+    store: boolean
   ) => {
     const event: ClientEvents.UpdateSensorThreshold = {
       deviceId,
       sensorIndex,
-      newThreshold
+      newThreshold,
+      store
     }
 
     this.ioSocket.emit('updateSensorThreshold', event)

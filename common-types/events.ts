@@ -26,6 +26,7 @@ export namespace ClientEvents {
   export type UpdateConfiguration = {
     deviceId: string
     configuration: Partial<DeviceConfiguration>
+    store: boolean
   }
 
   export type SubscribeToDevice = {
@@ -44,6 +45,7 @@ export namespace ClientEvents {
     deviceId: string
     sensorIndex: number,
     newThreshold: number
+    store: boolean
   }
 
   export type StartOrUpdateCalibration = {
