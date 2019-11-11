@@ -9,6 +9,7 @@ import { DeviceEvents, Device } from '../Device'
 import { ReportManager, ReportID } from './Teensy2Reports'
 import { ExtendableEmitter } from '../../util/ExtendableStrictEmitter'
 import delay from '../../util/delay'
+import { clamp } from 'lodash'
 
 export const VENDOR_ID = 0x03eb
 export const PRODUCT_ID = 0x204f
@@ -28,9 +29,7 @@ const LINEARIZATION_MAX_VALUE = Math.pow(MAX_SENSOR_VALUE, LINEARIZATION_POWER) 
 
 const calculateLinearizationValue = (value: number): number => {
   const linearizedValue = Math.pow(value, LINEARIZATION_POWER) / LINEARIZATION_MAX_VALUE
-  return (
-    linearizedValue * NTH_DEGREE_COEFFICIENT + Math.round(value * FIRST_DEGREE_COEFFICIENT)
-  )
+  return linearizedValue * NTH_DEGREE_COEFFICIENT + Math.round(value * FIRST_DEGREE_COEFFICIENT)
 }
 
 interface LinearizationValue {
@@ -93,10 +92,12 @@ const delinearizeValue = (value: number): number => {
 */
 
 const linearizeValue = (value: number) => {
+  value = clamp(value, 0, MAX_SENSOR_VALUE)
   return LINEARIZATION_LOOKUP_TABLE[value]
 }
 
 const delinearizeValue = (value: number) => {
+  value = clamp(value, 0, MAX_SENSOR_VALUE)
   return DELINEARIZATION_LOOKUP_TABLE[value]
 }
 
