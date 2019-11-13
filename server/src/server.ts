@@ -19,7 +19,10 @@ interface Params {
 type DeviceData = {
   id: string
   device: Device
-  whenLastInputEventSent: bigint
+  inputEventTracker: {
+    lastSent: bigint
+    accumulatedInputData: DeviceInputData | null
+  }
   calibration: CalibrationStatus
 }
 
@@ -59,7 +62,10 @@ const createServer = (params: Params) => {
     deviceDataById[device.id] = {
       id: device.id,
       device: device,
-      whenLastInputEventSent: BigInt(0),
+      inputEventTracker: {
+        lastSent: BigInt(0),
+        accumulatedInputData: null
+      },
       calibration: null
     }
 
@@ -120,21 +126,50 @@ const createServer = (params: Params) => {
   }
 
   const doSendInputEventToClient = (data: DeviceData, inputData: DeviceInputData) => {
-    const lastInputEventSent = data.whenLastInputEventSent
+    const inputEventTracker = data.inputEventTracker
     const now = process.hrtime.bigint()
 
-    // send input events only at specified rate – not at every event
-    if (lastInputEventSent !== undefined && lastInputEventSent + INPUT_EVENT_SEND_NS > now) {
+    if (inputEventTracker.accumulatedInputData === null) {
+      // first time receiving sensor values since sending an input event?
+      inputEventTracker.accumulatedInputData = {
+        sensors: [...inputData.sensors],
+        buttons: [...inputData.buttons]
+      }
+    } else {
+      // merge input data to accumulated input data so far.
+      const inputData = inputEventTracker.accumulatedInputData
+
+      // during accumulation, get the maximum sensor values of all input events received.
+      for (let sensorIndex = 0; sensorIndex < data.device.properties.sensorCount; sensorIndex++) {
+        inputEventTracker.accumulatedInputData.sensors[sensorIndex] = Math.max(
+          inputData.sensors[sensorIndex],
+          inputEventTracker.accumulatedInputData.sensors[sensorIndex]
+        )
+      }
+
+      // during accumulation, show button as pressed if it was pressed at any time during input
+      // events.
+      for (let buttonIndex = 0; buttonIndex < data.device.properties.buttonCount; buttonIndex++) {
+        inputEventTracker.accumulatedInputData.buttons[buttonIndex] =
+          inputData.buttons[buttonIndex] ||
+          inputEventTracker.accumulatedInputData.buttons[buttonIndex]
+      }
+    }
+
+    // if we need to still to wait before sending an input event, do nothing.
+    if (inputEventTracker.lastSent + INPUT_EVENT_SEND_NS > now) {
       return
     }
 
     const event: ServerEvents.InputEvent = {
       deviceId: data.id,
-      inputData
+      inputData: inputEventTracker.accumulatedInputData
     }
 
     params.socketIOServer.volatile.to(data.id).emit('inputEvent', event)
-    data.whenLastInputEventSent = now
+
+    inputEventTracker.lastSent = now
+    inputEventTracker.accumulatedInputData = null
   }
 
   const handleInputData = async (deviceId: string, inputData: DeviceInputData) => {
