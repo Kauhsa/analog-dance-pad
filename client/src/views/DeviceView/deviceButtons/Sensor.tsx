@@ -1,12 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { useDebouncedCallback } from 'use-debounce'
-import {
-  animated,
-  useSpring,
-  config as springConfig,
-  interpolate
-} from 'react-spring'
+import { animated, useSpring, interpolate } from 'react-spring'
 import { useDrag } from 'react-use-gesture'
 import { clamp } from 'lodash-es'
 
@@ -88,6 +83,10 @@ interface Props {
   enableThresholdChange: boolean
 }
 
+// TODO: perhaps in the future the backend tells us the rate it sends inputevents
+// so we can synchronize.
+const BACKEND_EVENT_SENT_EVERY_MS = 1000 / 20
+
 const Sensor = React.memo<Props>(
   ({ serverAddress, device, sensor, enableThresholdChange }) => {
     const serverConnection = useServerConnectionByAddr(serverAddress)
@@ -97,7 +96,7 @@ const Sensor = React.memo<Props>(
 
     const [{ value: sensorValue }, setSensorValue] = useSpring(() => ({
       value: 0,
-      config: { ...springConfig.stiff, clamp: true }
+      config: { duration: BACKEND_EVENT_SENT_EVERY_MS, clamp: true }
     }))
 
     const handleInputEvent = React.useCallback(
@@ -160,27 +159,27 @@ const Sensor = React.memo<Props>(
     ] = useDebouncedCallback(handleSensorThresholdUpdate, 100, { maxWait: 250 })
 
     const bindThumb = useDrag(({ down, xy }) => {
-      if (!containerRef.current || !enableThresholdChange) {
-        return
-      }
+        if (!containerRef.current || !enableThresholdChange) {
+          return
+        }
 
-      const boundingRect = containerRef.current.getBoundingClientRect()
-      const newValue = clamp(
+        const boundingRect = containerRef.current.getBoundingClientRect()
+        const newValue = clamp(
         (boundingRect.height + boundingRect.top - xy[1]) / boundingRect.height,
-        0,
-        1
-      )
+          0,
+          1
+        )
 
-      if (down) {
-        setThresholdValue({ value: newValue, immediate: true })
-        throttledSensorUpdate(newValue, false)
-        currentlyDownRef.current = true
-      } else {
-        cancelThrottledSensorUpdate()
-        setThresholdValue({ value: newValue, immediate: true })
-        handleSensorThresholdUpdate(newValue, true)
-        currentlyDownRef.current = false
-      }
+        if (down) {
+          setThresholdValue({ value: newValue, immediate: true })
+          throttledSensorUpdate(newValue, false)
+          currentlyDownRef.current = true
+        } else {
+          cancelThrottledSensorUpdate()
+          setThresholdValue({ value: newValue, immediate: true })
+          handleSensorThresholdUpdate(newValue, true)
+          currentlyDownRef.current = false
+        }
     })
 
     return (
