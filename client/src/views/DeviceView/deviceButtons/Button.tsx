@@ -17,7 +17,7 @@ import { largeText } from '../../../components/Typography'
 const NOT_PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.buttonBottomColor} 0%, ${colors.buttonTopColor} 100%)`
 const PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.pressedButtonBottomColor} 0%, ${colors.pressedBottomTopColor} 100%)`
 
-const Container = styled(animated.div)`
+const Container = styled.div`
   position: relative;
   background: ${NOT_PRESSED_BACKGROUND};
   display: flex;
@@ -75,20 +75,24 @@ const Button = React.memo<Props>(
       config: { duration: 100 }
     })
 
-    const [pressedStyle, setPressedStyle] = useSpring(() => ({
-      background: NOT_PRESSED_BACKGROUND
-    }))
+    const buttonContainerRef = React.useRef<HTMLDivElement>(null)
+    const currentlyPressedRef = React.useRef(false)
 
     const handleInputEvent = React.useCallback(
       (inputData: DeviceInputData) => {
         const isPressed = inputData.buttons[button.buttonIndex]
 
-        setPressedStyle({
-          background: isPressed ? PRESSED_BACKGROUND : NOT_PRESSED_BACKGROUND,
-          immediate: true
-        })
+        if (
+          currentlyPressedRef.current !== isPressed &&
+          buttonContainerRef.current !== null
+        ) {
+          currentlyPressedRef.current = isPressed
+          buttonContainerRef.current.style.background = isPressed
+            ? PRESSED_BACKGROUND
+            : NOT_PRESSED_BACKGROUND
+        }
       },
-      [button.buttonIndex, setPressedStyle]
+      [button.buttonIndex]
     )
 
     useEffect(() => {
@@ -104,7 +108,7 @@ const Button = React.memo<Props>(
 
     return (
       <Container
-        style={pressedStyle}
+        ref={buttonContainerRef}
         onClick={!selected ? onSelect : undefined}
       >
         <Header style={headerStyle}>
