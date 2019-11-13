@@ -13,6 +13,7 @@ import { useServerConnectionByAddr } from '../../../context/SocketContext'
 import { faArrowCircleLeft } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
 import { largeText } from '../../../components/Typography'
+import { usePreventMobileSafariDrag } from '../../../utils/usePreventiOSDrag'
 
 const NOT_PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.buttonBottomColor} 0%, ${colors.buttonTopColor} 100%)`
 const PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.pressedButtonBottomColor} 0%, ${colors.pressedBottomTopColor} 100%)`
@@ -77,6 +78,9 @@ const Button = React.memo<Props>(
 
     const buttonContainerRef = React.useRef<HTMLDivElement>(null)
     const currentlyPressedRef = React.useRef(false)
+
+    // we need this so the sensor threshold drags won't be annoying.
+    usePreventMobileSafariDrag(buttonContainerRef)
 
     const handleInputEvent = React.useCallback(
       (inputData: DeviceInputData) => {
