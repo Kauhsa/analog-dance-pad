@@ -29,10 +29,15 @@ function start(port: number, host: string) {
     consola.info(`Application started, listening ${host}:${port}`)
   )
 
-  process.on('SIGINT', () => {
+  const stop = () => {
     closeServer()
     process.exit(0)
-  })
+  }
+
+  // this shouldn't be needed, but usb-detection library we're using is being
+  // annoying. or something. figuring it out is TODO.
+  process.on('SIGINT', stop)
+  process.on('SIGTERM', stop)
 }
 
 const port = (process.env.PORT && parseInt(process.env.PORT, 10)) || 3333
