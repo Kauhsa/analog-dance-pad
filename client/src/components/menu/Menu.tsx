@@ -31,6 +31,7 @@ const MenuContainer = styled(animated.nav)<{ position: MenuPosition }>`
   z-index: ${BACKDROP_Z_INDEX + 1};
   will-change: transform;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* for mobile safari */
 
   ${props =>
     props.position === 'left' &&
