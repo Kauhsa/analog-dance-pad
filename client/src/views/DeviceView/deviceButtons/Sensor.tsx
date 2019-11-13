@@ -158,14 +158,16 @@ const Sensor = React.memo<Props>(
       cancelThrottledSensorUpdate
     ] = useDebouncedCallback(handleSensorThresholdUpdate, 100, { maxWait: 250 })
 
-    const bindThumb = useDrag(({ down, xy }) => {
+    const bindThumb = useDrag(
+      ({ down, xy }) => {
         if (!containerRef.current || !enableThresholdChange) {
           return
         }
 
         const boundingRect = containerRef.current.getBoundingClientRect()
         const newValue = clamp(
-        (boundingRect.height + boundingRect.top - xy[1]) / boundingRect.height,
+          (boundingRect.height + boundingRect.top - xy[1]) /
+            boundingRect.height,
           0,
           1
         )
@@ -180,7 +182,9 @@ const Sensor = React.memo<Props>(
           handleSensorThresholdUpdate(newValue, true)
           currentlyDownRef.current = false
         }
-    })
+      },
+      { dragDelay: true } // try to prevent accidental drags
+    )
 
     return (
       <Container ref={containerRef}>
