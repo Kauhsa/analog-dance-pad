@@ -57,8 +57,8 @@ const ThumbContainer = styled(animated.div)`
   display: flex;
   justify-content: center;
   left: 50%;
-  padding-bottom: ${scale(2)};
-  padding-top: ${scale(2)};
+  padding-bottom: ${scale(6)};
+  padding-top: ${scale(6)};
   position: absolute;
   transform: translate(-50%, 50%);
   user-select: none;
