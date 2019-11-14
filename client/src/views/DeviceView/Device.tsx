@@ -65,7 +65,7 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
       }
 
       serverConnection.calibrate(device.id, calibrationBuffer)
-      closeCalibrationMenu()
+      setTimeout(closeCalibrationMenu, 100)
     },
     [closeCalibrationMenu, device.id, serverConnection]
   )
