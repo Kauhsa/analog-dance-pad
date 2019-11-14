@@ -11,6 +11,7 @@ interface Props {
 
 const Button = styled.div`
   ${basicText};
+  font-weight: bold;
   display: block;
   color: black;
   background-color: white;
