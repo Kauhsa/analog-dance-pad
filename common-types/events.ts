@@ -2,7 +2,6 @@ import { DeviceConfiguration, DeviceInputData, DeviceDescriptionMap } from './de
 
 // events from server
 export namespace ServerEvents {
-  // from server
   export type DevicesUpdated = {
     devices: DeviceDescriptionMap
   }
@@ -48,16 +47,8 @@ export namespace ClientEvents {
     store: boolean
   }
 
-  export type StartOrUpdateCalibration = {
+  export type Calibrate = {
     deviceId: string,
     calibrationBuffer: number
-  }
-
-  export type CancelCalibration = {
-    deviceId: string
-  }
-
-  export type SaveCalibration = {
-    deviceId: string
   }
 } 

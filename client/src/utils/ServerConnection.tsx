@@ -120,29 +120,13 @@ class ServerConnection {
     this.ioSocket.emit('updateSensorThreshold', event)
   }
 
-  startOrUpdateCalibration = (deviceId: string, calibrationBuffer: number) => {
-    const event: ClientEvents.StartOrUpdateCalibration = {
+  calibrate = (deviceId: string, calibrationBuffer: number) => {
+    const event: ClientEvents.Calibrate = {
       deviceId,
       calibrationBuffer
     }
 
-    this.ioSocket.emit('startOrUpdateCalibration', event)
-  }
-
-  saveCalibration = (deviceId: string) => {
-    const event: ClientEvents.SaveCalibration = {
-      deviceId
-    }
-
-    this.ioSocket.emit('saveCalibration', event)
-  }
-
-  cancelCalibration = (deviceId: string) => {
-    const event: ClientEvents.CancelCalibration = {
-      deviceId
-    }
-
-    this.ioSocket.emit('cancelCalibration', event)
+    this.ioSocket.emit('calibrate', event)
   }
 }
 

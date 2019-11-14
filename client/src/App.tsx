@@ -12,6 +12,7 @@ import DeviceView from './views/DeviceView/DeviceView'
 import { MenuContextProvider } from './context/MenuContext'
 import MainMenu from './components/mainMenu/MainMenu'
 import LandingView from './views/LandingView'
+import config from './config'
 
 const AppContainer = styled.div`
   height: 100%;
@@ -33,10 +34,6 @@ const GlobalStyles = createGlobalStyle`
   }
 `
 
-const SERVER_ADDRESSES = process.env.REACT_APP_SERVER_ADDRESSES
-  ? process.env.REACT_APP_SERVER_ADDRESSES.split(',')
-  : ['localhost:3333']
-
 const App = () => (
   <HelmetProvider>
     <Helmet>
@@ -45,7 +42,7 @@ const App = () => (
 
     <GlobalStyles />
 
-    <SocketContextProvider serverAddresses={SERVER_ADDRESSES}>
+    <SocketContextProvider serverAddresses={config.serverAddresses}>
       <AppContainer>
         <BrowserRouter>
           <MenuContextProvider>

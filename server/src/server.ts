@@ -8,7 +8,7 @@ import { clamp, mapValues } from 'lodash'
 
 const SECOND_AS_NS = BigInt(1e9)
 const INPUT_EVENT_SEND_NS = SECOND_AS_NS / BigInt(20) // 20hz
-const EVENTS_REQUIRED_FOR_CALIBRATION_TICK = 250
+const INPUT_EVENTS_REQUIRED_FOR_CALIBRATION = 250
 
 interface Params {
   expressApplication: Express.Application
@@ -31,7 +31,6 @@ type CalibrationStatus = {
   calibrationBuffer: number
   inputEventsCalculated: number
   currentSensorValueAverage: number[] | null // null = no data yet
-  sensorThresholdsBeforeStartingCalibration: number[]
 } | null
 
 const createServer = (params: Params) => {
@@ -112,15 +111,15 @@ const createServer = (params: Params) => {
     calibration.inputEventsCalculated++
 
     // Have we enough data to update?
-    if (calibration.inputEventsCalculated > EVENTS_REQUIRED_FOR_CALIBRATION_TICK) {
+    if (calibration.inputEventsCalculated > INPUT_EVENTS_REQUIRED_FOR_CALIBRATION) {
       const sensorThresholds = calibration.currentSensorValueAverage.map(value =>
         clamp(value + calibration.calibrationBuffer, 0, 1)
       )
 
-      calibration.currentSensorValueAverage = null
-      calibration.inputEventsCalculated = 0
-
+      // Remove calibration and update new values.
+      deviceData.calibration = null
       await device.updateConfiguration({ sensorThresholds })
+      await device.saveConfiguration()
       broadcastDevicesUpdated()
     }
   }
@@ -238,44 +237,15 @@ const createServer = (params: Params) => {
       )
     })
 
-    socket.on('startOrUpdateCalibration', async (data: ClientEvents.StartOrUpdateCalibration) => {
+    socket.on('calibrate', async (data: ClientEvents.Calibrate) => {
       const deviceData = deviceDataById[data.deviceId]
 
-      if (deviceData.calibration === null) {
-        deviceData.calibration = {
-          sensorThresholdsBeforeStartingCalibration: [
-            ...deviceData.device.configuration.sensorThresholds
-          ],
-          calibrationBuffer: data.calibrationBuffer,
-          currentSensorValueAverage: null,
-          inputEventsCalculated: 0
-        }
-      } else {
-        deviceData.calibration.calibrationBuffer = data.calibrationBuffer
+      deviceData.calibration = {
+        calibrationBuffer: data.calibrationBuffer,
+        currentSensorValueAverage: null,
+        inputEventsCalculated: 0
       }
 
-      broadcastDevicesUpdated()
-    })
-
-    socket.on('cancelCalibration', async (data: ClientEvents.CancelCalibration) => {
-      const deviceData = deviceDataById[data.deviceId]
-
-      if (!deviceData.calibration) {
-        return
-      }
-
-      await deviceData.device.updateConfiguration({
-        sensorThresholds: deviceData.calibration.sensorThresholdsBeforeStartingCalibration
-      })
-
-      deviceData.calibration = null
-      broadcastDevicesUpdated()
-    })
-
-    socket.on('saveCalibration', async (data: ClientEvents.SaveCalibration) => {
-      const deviceData = deviceDataById[data.deviceId]
-      deviceData.calibration = null
-      await deviceData.device.saveConfiguration()
       broadcastDevicesUpdated()
     })
 

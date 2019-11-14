@@ -48,39 +48,26 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
 
   // calibration
 
-  const handleStartCalibration = React.useCallback(() => {
-    if (!serverConnection) {
-      return
-    }
+  const [calibrationMenuOpen, setCalibrationMenuOpen] = React.useState(false)
 
-    serverConnection.startOrUpdateCalibration(device.id, 0.1)
-  }, [device.id, serverConnection])
+  const openCalibrationMenu = React.useCallback(() => {
+    setCalibrationMenuOpen(true)
+  }, [])
 
-  const handleSaveCalibration = React.useCallback(() => {
-    if (!serverConnection) {
-      return
-    }
+  const closeCalibrationMenu = React.useCallback(() => {
+    setCalibrationMenuOpen(false)
+  }, [])
 
-    serverConnection.saveCalibration(device.id)
-  }, [device.id, serverConnection])
-
-  const handleCancelCalibration = React.useCallback(() => {
-    if (!serverConnection) {
-      return
-    }
-
-    serverConnection.cancelCalibration(device.id)
-  }, [device.id, serverConnection])
-
-  const handleUpdateCalibration = React.useCallback(
-    (value: number) => {
+  const handleCalibrate = React.useCallback(
+    (calibrationBuffer: number) => {
       if (!serverConnection) {
         return
       }
 
-      serverConnection.startOrUpdateCalibration(device.id, value)
+      serverConnection.calibrate(device.id, calibrationBuffer)
+      closeCalibrationMenu()
     },
-    [device.id, serverConnection]
+    [closeCalibrationMenu, device.id, serverConnection]
   )
 
   return (
@@ -93,18 +80,14 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
       />
 
       <Calibration
-        enabled={device.calibration !== null}
-        calibrationBuffer={
-          device.calibration && device.calibration.calibrationBuffer
-        }
-        onSave={handleSaveCalibration}
-        onCancel={handleCancelCalibration}
-        onChange={handleUpdateCalibration}
+        isOpen={calibrationMenuOpen}
+        onCalibrate={handleCalibrate}
+        onCancel={closeCalibrationMenu}
       />
 
       <TopBar>
         <TopBarTitle>{device.configuration.name}</TopBarTitle>
-        <TopBarButton icon={faBalanceScale} onClick={handleStartCalibration} />
+        <TopBarButton icon={faBalanceScale} onClick={openCalibrationMenu} />
         <TopBarButton icon={faCog} onClick={openConfigurationMenu} />
       </TopBar>
 
