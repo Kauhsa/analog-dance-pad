@@ -17,6 +17,12 @@ const Button = styled.div`
   padding: ${scale(1)};
   text-align: center;
   border-radius: 999px;
+  transition: transform 200ms;
+  transform: scale(1);
+
+  &:active {
+    transform: scale(0.9);
+  }
 `
 
 const CalibrationButton = React.memo<Props>(
