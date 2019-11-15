@@ -1,0 +1,41 @@
+matrix:
+  include:
+    - name: Client
+      language: node_js
+      node_js: 12
+      before_script:
+        - (cd common-types && npm i && npm run build)
+        - cd client
+        - npm i
+      script:
+        - npm run lint
+        - npm run build
+
+    - name: Server
+      language: node_js
+      node_js: 12
+      before_script:
+        - (cd common-types && npm i && npm run build)
+        - cd server
+        - npm i
+      script:
+        - npm run lint
+        - npm run build
+      addons:
+        apt:
+          packages:
+            - libudev-dev # building usb-detection needs this.
+
+    - name: Teensy 2 firmware
+      language: c
+      dist: bionic # to not have ancient avr-gcc.
+      before_script:
+        - cd firmware/teensy2/build
+      script:
+        - make
+      addons:
+        apt:
+          packages:
+            - gcc-avr
+            - binutils-avr
+            - avr-libc
