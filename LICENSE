@@ -1,11 +1,11 @@
-Teensy 2 firmware is based on LUFA example code, which is copyrighted to:
-
-Copyright 2017 Dean Camera (dean [at] fourwalledcubicle [dot] com)
-
-Otherwise:
+MIT License
 
 Copyright 2019 Mika Viinamäki (kauhsa [at] kapsi [dot] com)
 Copyright 2019 Markus Kokkonen
+
+Teensy 2 firmware is based on LUFA example code, which is copyrighted to:
+
+Copyright 2017 Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
 Permission to use, copy, modify, distribute, and sell this
 software and its documentation for any purpose is hereby granted
