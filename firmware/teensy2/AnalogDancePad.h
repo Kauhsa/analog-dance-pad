@@ -1,13 +1,9 @@
 /*
-             LUFA Library
-     Copyright (C) Dean Camera, 2017.
+  Based on LUFA Library example code (www.lufa-lib.org):
 
-  dean [at] fourwalledcubicle [dot] com
-           www.lufa-lib.org
-*/
-
-/*
   Copyright 2017  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+
+  See other copyrights in LICENSE file on repository root.
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
