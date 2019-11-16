@@ -97,9 +97,15 @@ You probably need to set some environment variables for the client to be useful.
   - Example: `196.168.1.10:3333,196.168.1.11:3333`
   - Default: `localhost:3333`
 
-- `REACT_APP_CALIBARTION_PRESETS`
+- `REACT_APP_CALIBRATION_PRESETS`
   - List of presets in calibration UI.
   - Default: `Sensitive:0.05,Normal:0.1,Stiff:0.15`
+
+- `REACT_APP_FORCE_UNSECURE`
+  - Detect whether the client is accessed through HTTPS, and redirect to HTTP if it is.
+    - Why? Well, sometimes you might want to deploy the client in Internet, because it's easy and you don't want to deal with your own HTTP server. However, many convenient website hosting services (such as [Surge](https://surge.sh/)) often automatically serve you HTTPS version of the site, or you just end up to the HTTPS version accidentally. Due to mixed-content security policies, you cannot access anything unsecured – such as servers in the local network – if you're accessing the client in HTTPS.
+  - Disabled by default.
+  - Set to `true` enable.
 
 ## License
 

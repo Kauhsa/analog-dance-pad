@@ -36,7 +36,13 @@ const calibrationPresets: CalibrationPreset[] = calibrationPresetEnv
       { name: 'Stiff', calibrationBuffer: 0.15 }
     ]
 
+// Set REACT_APP_FORCE_NONSECURE=true to automatically redirect to HTTP using
+// JavaScript in case you need it.
+
+const forceNonSecure = process.env.REACT_APP_FORCE_NONSECURE === 'true'
+
 export default {
   serverAddresses,
-  calibrationPresets
+  calibrationPresets,
+  forceNonSecure
 }
