@@ -29,7 +29,7 @@ const LINEARIZATION_MAX_VALUE = Math.pow(MAX_SENSOR_VALUE, LINEARIZATION_POWER) 
 
 const calculateLinearizationValue = (value: number): number => {
   const linearizedValue = Math.pow(value, LINEARIZATION_POWER) / LINEARIZATION_MAX_VALUE
-  return linearizedValue * NTH_DEGREE_COEFFICIENT + Math.round(value * FIRST_DEGREE_COEFFICIENT)
+  return linearizedValue * NTH_DEGREE_COEFFICIENT + value * FIRST_DEGREE_COEFFICIENT
 }
 
 interface LinearizationValue {
@@ -47,58 +47,34 @@ for (let i = MAX_SENSOR_VALUE; i >= 0; i--) {
   DELINEARIZATION_LOOKUP_TABLE[linearizedValue.toFixed(DELINEARIZATION_LOOKUP_DIGITS)] = i
 }
 
-/* For testing
-for (let i = 0; i <= MAX_SENSOR_VALUE; i++) {
-  console.log(
-    'raw: ',
-    i,
-    ', linearized: ',
-    LINEARIZATION_LOOKUP_TABLE[i],
-    ', delinearized: ',
-    DELINEARIZATION_LOOKUP_TABLE[
-      LINEARIZATION_LOOKUP_TABLE[i].toFixed(DELINEARIZATION_LOOKUP_DIGITS)
-    ]
-  )
-}
-*/
-
-/* For if we ever want to not rely on the lookup tables
-
-for (let i = MAX_SENSOR_VALUE; i >= 0; i--) {
-  LINEARIZATION_RAW_PARTS[Math.floor(linearizeValue(i))] = getLinearizationRawPart(i)
-}
-
-const delinearizeValue = (value: number): number => {
-  if (value > MAX_SENSOR_VALUE) value = MAX_SENSOR_VALUE
-
-  let rawPart = -1
-
-  let x: number = 0
-
-  while (rawPart < 0) {
-    if (typeof LINEARIZATION_RAW_PARTS[(Math.floor(value) - x).toString()] !== 'undefined') {
-      rawPart = LINEARIZATION_RAW_PARTS[(Math.floor(value) - x).toString()]
-    }
-    x++
-  }
-
-  const linearizedPart = Math.pow(
-    ((value - rawPart) / LINEARIZED_VALUE_WEIGHT) * LINEARIZATION_MAX_VALUE,
-    1.0 / LINEARIZATION_POWER
-  )
-
-  return Math.floor(linearizedPart)
-}
-*/
-
 const linearizeValue = (value: number) => {
   value = clamp(value, 0, MAX_SENSOR_VALUE)
+
+  if (typeof LINEARIZATION_LOOKUP_TABLE[value] === 'undefined') {
+    return calculateLinearizationValue(value)
+  }
+
   return LINEARIZATION_LOOKUP_TABLE[value]
 }
 
 const delinearizeValue = (value: number) => {
   value = clamp(value, 0, MAX_SENSOR_VALUE)
-  return DELINEARIZATION_LOOKUP_TABLE[value]
+  const valueStr: string = value.toFixed(DELINEARIZATION_LOOKUP_DIGITS)
+
+  if (typeof DELINEARIZATION_LOOKUP_TABLE[valueStr] === 'undefined') {
+    value = Math.floor(value)
+    while (value > 0) {
+      const lookupValue = DELINEARIZATION_LOOKUP_TABLE[value]
+      if (typeof lookupValue !== 'undefined') {
+        return lookupValue
+      }
+      value--
+    }
+
+    return 0
+  }
+
+  return DELINEARIZATION_LOOKUP_TABLE[valueStr]
 }
 
 const linearizeSensorValues = (numbers: number[]) => numbers.map(linearizeValue)
