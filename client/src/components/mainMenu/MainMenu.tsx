@@ -3,11 +3,11 @@ import styled from 'styled-components'
 import { sortBy } from 'lodash-es'
 
 import scale from '../../utils/scale'
-import { useMenuContext } from '../../context/MenuContext'
-import { useServerContext } from '../../context/SocketContext'
 import MenuServer from './MenuServer'
 import Menu from '../menu/Menu'
 import MenuHeader from '../menu/MenuHeader'
+import useServerStore from '../../stores/useServerStore'
+import useMainMenuStore from '../../stores/useMainMenuStore'
 
 const ServersContainer = styled.div`
   > * {
@@ -16,13 +16,13 @@ const ServersContainer = styled.div`
 `
 
 const MainMenu = () => {
-  const { isMenuOpen, closeMenu } = useMenuContext()
-  const { serversState } = useServerContext()
+  const { isMenuOpen, closeMenu } = useMainMenuStore()
+  const servers = useServerStore(store => store.servers)
 
-  const sortedServers = React.useMemo(() => {
-    const servers = Object.values(serversState.servers)
-    return sortBy(servers, s => s.address)
-  }, [serversState.servers])
+  const sortedServers = React.useMemo(
+    () => sortBy(Object.values(servers), s => s.address),
+    [servers]
+  )
 
   return (
     <>

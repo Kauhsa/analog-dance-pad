@@ -10,7 +10,9 @@ import {
   DeviceConfiguration
 } from '../../../../common-types/device'
 import { faBalanceScale, faCog } from '@fortawesome/free-solid-svg-icons'
-import { useServerConnectionByAddr } from '../../context/SocketContext'
+import useServerStore, {
+  serverConnectionByAddr
+} from '../../stores/useServerStore'
 
 interface Props {
   serverAddress: string
@@ -18,7 +20,7 @@ interface Props {
 }
 
 const Device = React.memo<Props>(({ serverAddress, device }) => {
-  const serverConnection = useServerConnectionByAddr(serverAddress)
+  const serverConnection = useServerStore(serverConnectionByAddr(serverAddress))
 
   // configuration menu
 

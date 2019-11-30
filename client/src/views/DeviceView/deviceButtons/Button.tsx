@@ -9,11 +9,13 @@ import {
   DeviceDescription,
   DeviceInputData
 } from '../../../../../common-types/device'
-import { useServerConnectionByAddr } from '../../../context/SocketContext'
 import { faArrowCircleLeft } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '../../../components/IconButton'
 import { largeText } from '../../../components/Typography'
 import { usePreventMobileSafariDrag } from '../../../utils/usePreventiOSDrag'
+import useServerStore, {
+  serverConnectionByAddr
+} from '../../../stores/useServerStore'
 
 const NOT_PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.buttonBottomColor} 0%, ${colors.buttonTopColor} 100%)`
 const PRESSED_BACKGROUND = `linear-gradient(to top, ${colors.pressedButtonBottomColor} 0%, ${colors.pressedBottomTopColor} 100%)`
@@ -69,7 +71,9 @@ interface Props {
 
 const Button = React.memo<Props>(
   ({ selected, button, device, serverAddress, onSelect, onBack }) => {
-    const serverConnection = useServerConnectionByAddr(serverAddress)
+    const serverConnection = useServerStore(
+      serverConnectionByAddr(serverAddress)
+    )
 
     const headerStyle = useSpring({
       opacity: selected ? 0.75 : 0,

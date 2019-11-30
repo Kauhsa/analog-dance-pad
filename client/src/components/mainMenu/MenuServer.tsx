@@ -3,15 +3,15 @@ import { NavLink, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
 import { isEmpty, map } from 'lodash'
 
-import {
-  ServerConnectionStatus,
-  ServerState
-} from '../../stateHooks/useServerState'
 import scale from '../../utils/scale'
 import { colors } from '../../utils/colors'
 import { smallText, basicText } from '../Typography'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faServer } from '@fortawesome/free-solid-svg-icons'
+import {
+  ServerConnectionStatus,
+  ServerState
+} from '../../stores/useServerStore'
 
 interface Props {
   server: ServerState

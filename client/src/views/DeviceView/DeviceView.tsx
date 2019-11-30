@@ -1,9 +1,11 @@
 import React from 'react'
-import { useServerContext } from '../../context/SocketContext'
-import { ServerConnectionStatus } from '../../stateHooks/useServerState'
 import IconAndTextPage from '../../components/IconAndTextPage'
 import { faPoo, faPlug, faGamepad } from '@fortawesome/free-solid-svg-icons'
 import Device from './Device'
+import useServerStore, {
+  ServerConnectionStatus,
+  serverByAddr
+} from '../../stores/useServerStore'
 
 interface Props {
   serverId: string
@@ -11,8 +13,7 @@ interface Props {
 }
 
 const DeviceView: React.FC<Props> = ({ serverId, deviceId }) => {
-  const serverContext = useServerContext()
-  const server = serverContext.serversState.servers[serverId]
+  const server = useServerStore(serverByAddr(serverId))
 
   if (!server) {
     return <IconAndTextPage icon={faPoo}>Unknown server!</IconAndTextPage>

@@ -13,7 +13,9 @@ import {
   DeviceDescription,
   DeviceInputData
 } from '../../../../../common-types/device'
-import { useServerConnectionByAddr } from '../../../context/SocketContext'
+import useServerStore, {
+  serverConnectionByAddr
+} from '../../../stores/useServerStore'
 
 const Container = styled.div`
   height: 100%;
@@ -89,7 +91,9 @@ const BACKEND_EVENT_SENT_EVERY_MS = 1000 / 20
 
 const Sensor = React.memo<Props>(
   ({ serverAddress, device, sensor, enableThresholdChange }) => {
-    const serverConnection = useServerConnectionByAddr(serverAddress)
+    const serverConnection = useServerStore(
+      serverConnectionByAddr(serverAddress)
+    )
 
     const containerRef = React.useRef<HTMLDivElement>(null)
     const currentlyDownRef = React.useRef<boolean>(false)
