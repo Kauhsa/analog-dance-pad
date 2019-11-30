@@ -56,12 +56,24 @@ interface Props {
 }
 
 const Menu = React.memo<Props>(({ isOpen, children, onClose, position }) => {
+  const [mountChildren, setMountChildren] = React.useState(isOpen)
+
   const closedTransform =
     position === 'left' ? 'translateX(-100%)' : 'translateX(100%)'
 
   const containerStyle = useSpring({
     transform: isOpen ? 'translateX(0%)' : closedTransform,
-    config: { mass: 1, tension: 400, friction: 30 }
+    config: { mass: 1, tension: 400, friction: 30 },
+    onStart: () => {
+      if (isOpen) {
+        setMountChildren(true)
+      }
+    },
+    onRest: () => {
+      if (!isOpen) {
+        setMountChildren(false)
+      }
+    }
   })
 
   const backdropStyle = useSpring({
@@ -74,12 +86,8 @@ const Menu = React.memo<Props>(({ isOpen, children, onClose, position }) => {
   return (
     <>
       <Backdrop style={backdropStyle} onClick={onClose} />
-      <MenuContainer
-        position={position}
-        style={containerStyle}
-        tabIndex={isOpen ? undefined : -1}
-      >
-        {frozenChildren}
+      <MenuContainer position={position} style={containerStyle}>
+        {mountChildren && frozenChildren}
       </MenuContainer>
     </>
   )
