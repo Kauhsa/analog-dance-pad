@@ -3,8 +3,8 @@ import { largeText } from '../Typography'
 
 const TopBarTitle = styled.h1`
   ${largeText};
-  line-height: 1;
   flex-grow: 1;
+  line-height: 1.3;
 `
 
 export default TopBarTitle

@@ -8,6 +8,8 @@ import {
   DeviceDescriptionMap
 } from '../../../common-types/device'
 
+import SubscriptionManager from './SubscriptionManager'
+
 interface ServerConnectionSettings {
   address: string
   onConnect: () => void
@@ -17,13 +19,12 @@ interface ServerConnectionSettings {
 
 class ServerConnection {
   private ioSocket: SocketIOClient.Socket
-
-  private inputEventSubscribers: {
-    [deviceId: string]: Set<(inputData: DeviceInputData) => void>
-  }
+  private inputEventSubscriptions: SubscriptionManager<DeviceInputData>
+  private rateEventSubscriptions: SubscriptionManager<number>
 
   constructor(settings: ServerConnectionSettings) {
-    this.inputEventSubscribers = {}
+    this.inputEventSubscriptions = new SubscriptionManager()
+    this.rateEventSubscriptions = new SubscriptionManager()
 
     this.ioSocket = io(settings.address, {
       transports: ['websocket']
@@ -34,18 +35,15 @@ class ServerConnection {
       settings.onDevicesUpdated(event.devices)
     )
     this.ioSocket.on('inputEvent', this.handleInputEvent)
+    this.ioSocket.on('eventRate', this.handleRateEvent)
   }
 
   private handleInputEvent = (event: ServerEvents.InputEvent) => {
-    const currentSubscribers = this.inputEventSubscribers[event.deviceId]
+    this.inputEventSubscriptions.emit(event.deviceId, event.inputData)
+  }
 
-    if (!currentSubscribers) {
-      return
-    }
-
-    for (const subscriber of currentSubscribers.values()) {
-      subscriber(event.inputData)
-    }
+  private handleRateEvent = (event: ServerEvents.EventRate) => {
+    this.rateEventSubscriptions.emit(event.deviceId, event.eventRate)
   }
 
   private subscribeToDevice = (deviceId: string) => {
@@ -60,37 +58,50 @@ class ServerConnection {
     this.ioSocket.emit('unsubscribeFromDevice', event)
   }
 
-  subscribeToInputEvents = (
+  private hasAnySubscriptionsForDevice = (deviceId: string) => {
+    return (
+      this.inputEventSubscriptions.hasSubscriptionsFor(deviceId) ||
+      this.rateEventSubscriptions.hasSubscriptionsFor(deviceId)
+    )
+  }
+
+  public subscribeToInputEvents = (
     deviceId: string,
     callback: (data: DeviceInputData) => void
   ) => {
-    if (this.inputEventSubscribers[deviceId] === undefined) {
-      // if there are no other subscribers for this device, subscribe to events
+    if (!this.hasAnySubscriptionsForDevice(deviceId)) {
       this.subscribeToDevice(deviceId)
-      this.inputEventSubscribers[deviceId] = new Set([callback])
-    } else {
-      // if there are other subscriptions, just push the callback to list
-      this.inputEventSubscribers[deviceId].add(callback)
     }
 
-    // unsubscription function
+    this.inputEventSubscriptions.subscribe(deviceId, callback)
+
     return () => {
-      if (this.inputEventSubscribers[deviceId] === undefined) {
-        return
-      }
-
-      // remove callback from subscribers
-      this.inputEventSubscribers[deviceId].delete(callback)
-
-      // if this was last subscriber, unsubscribe and remove the whole subscriber list
-      if (this.inputEventSubscribers[deviceId].size === 0) {
+      this.inputEventSubscriptions.unsubscribe(deviceId, callback)
+      if (!this.hasAnySubscriptionsForDevice(deviceId)) {
         this.unsubscribeFromDevice(deviceId)
-        delete this.inputEventSubscribers[deviceId]
       }
     }
   }
 
-  updateConfiguration = (
+  public subscribeToRateEvents = (
+    deviceId: string,
+    callback: (rate: number) => void
+  ) => {
+    if (!this.hasAnySubscriptionsForDevice(deviceId)) {
+      this.subscribeToDevice(deviceId)
+    }
+
+    this.rateEventSubscriptions.subscribe(deviceId, callback)
+
+    return () => {
+      this.rateEventSubscriptions.unsubscribe(deviceId, callback)
+      if (!this.hasAnySubscriptionsForDevice(deviceId)) {
+        this.unsubscribeFromDevice(deviceId)
+      }
+    }
+  }
+
+  public updateConfiguration = (
     deviceId: string,
     configuration: Partial<DeviceConfiguration>,
     store: boolean
@@ -104,7 +115,7 @@ class ServerConnection {
     this.ioSocket.emit('updateConfiguration', event)
   }
 
-  updateSensorThreshold = (
+  public updateSensorThreshold = (
     deviceId: string,
     sensorIndex: number,
     newThreshold: number,
@@ -120,7 +131,7 @@ class ServerConnection {
     this.ioSocket.emit('updateSensorThreshold', event)
   }
 
-  calibrate = (deviceId: string, calibrationBuffer: number) => {
+  public calibrate = (deviceId: string, calibrationBuffer: number) => {
     const event: ClientEvents.Calibrate = {
       deviceId,
       calibrationBuffer

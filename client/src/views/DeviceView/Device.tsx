@@ -13,6 +13,7 @@ import { faBalanceScale, faCog } from '@fortawesome/free-solid-svg-icons'
 import useServerStore, {
   serverConnectionByAddr
 } from '../../stores/useServerStore'
+import TopBarSubtitle from '../../components/topBar/TopBarSubtitle'
 
 interface Props {
   serverAddress: string
@@ -72,6 +73,27 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
     [closeCalibrationMenu, device.id, serverConnection]
   )
 
+  const eventRateFieldRef = React.useRef<HTMLSpanElement>(null)
+
+  const handleEventRateUpdate = React.useCallback((rate: number) => {
+    if (!eventRateFieldRef.current) {
+      return
+    }
+
+    eventRateFieldRef.current.innerText = rate + ' Hz'
+  }, [])
+
+  React.useEffect(() => {
+    if (!serverConnection) {
+      return
+    }
+
+    return serverConnection.subscribeToRateEvents(
+      device.id,
+      handleEventRateUpdate
+    )
+  }, [device.id, handleEventRateUpdate, serverConnection])
+
   return (
     <>
       <DeviceConfigurationMenu
@@ -88,7 +110,10 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
       />
 
       <TopBar>
-        <TopBarTitle>{device.configuration.name}</TopBarTitle>
+        <TopBarTitle>
+          {device.configuration.name}
+          <TopBarSubtitle ref={eventRateFieldRef}></TopBarSubtitle>
+        </TopBarTitle>
         <TopBarButton icon={faBalanceScale} onClick={openCalibrationMenu} />
         <TopBarButton icon={faCog} onClick={openConfigurationMenu} />
       </TopBar>
