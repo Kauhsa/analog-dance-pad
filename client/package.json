@@ -31,7 +31,8 @@
     "build-and-serve": "npm run build && serve -s build -p 3000",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "lint": "eslint -c .eslintrc.js src/ --ext .ts --ext .tsx"
+    "lint": "eslint -c .eslintrc.js src/ --ext .ts --ext .tsx",
+    "typecheck": "tsc --noEmit"
   },
   "eslintConfig": {},
   "browserslist": {
