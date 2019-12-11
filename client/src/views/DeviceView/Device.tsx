@@ -98,6 +98,7 @@ const Device = React.memo<Props>(({ serverAddress, device }) => {
     <>
       <DeviceConfigurationMenu
         device={device}
+        serverAddress={serverAddress}
         isOpen={configurationMenuOpen}
         onSave={handleSaveConfiguration}
         onClose={closeConfigurationMenu}

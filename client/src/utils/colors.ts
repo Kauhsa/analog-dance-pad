@@ -9,6 +9,7 @@ export const colorValues = {
   white: '#FFFFFF'
 }
 
+// TODO: nuke this and just use colorValues.
 export const colors = {
   background: colorValues.darkBlue,
   menuBackground: chroma(colorValues.darkBlue)

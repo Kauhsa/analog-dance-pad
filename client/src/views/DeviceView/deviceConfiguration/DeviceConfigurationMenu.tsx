@@ -8,6 +8,7 @@ import {
 } from '../../../../../common-types/device'
 
 interface Props {
+  serverAddress: string
   device: DeviceDescription
   isOpen: boolean
   onSave: (configuration: Partial<DeviceConfiguration>) => void
@@ -15,10 +16,14 @@ interface Props {
 }
 
 const DeviceConfigurationMenu = React.memo<Props>(
-  ({ device, onClose, onSave, isOpen }) => (
+  ({ device, onClose, onSave, isOpen, serverAddress }) => (
     <Menu isOpen={isOpen} position="right" onClose={onClose}>
       <MenuHeader>Configuration</MenuHeader>
-      <ConfigurationForm device={device} onSubmit={onSave} />
+      <ConfigurationForm
+        serverAddress={serverAddress}
+        device={device}
+        onSubmit={onSave}
+      />
     </Menu>
   )
 )

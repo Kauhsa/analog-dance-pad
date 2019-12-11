@@ -9,13 +9,11 @@ import { colors } from '../../../utils/colors'
 import { SensorType } from '../../../domain/Button'
 import toPercentage from '../../../utils/toPercentage'
 import scale from '../../../utils/scale'
-import {
-  DeviceDescription,
-  DeviceInputData
-} from '../../../../../common-types/device'
+import useSensorValueSpring from '../../../utils/useSensorValueSpring'
 import useServerStore, {
   serverConnectionByAddr
 } from '../../../stores/useServerStore'
+import { DeviceDescription } from '../../../../../common-types/device'
 
 const Container = styled.div`
   height: 100%;
@@ -85,10 +83,6 @@ interface Props {
   enableThresholdChange: boolean
 }
 
-// TODO: perhaps in the future the backend tells us the rate it sends inputevents
-// so we can synchronize.
-const BACKEND_EVENT_SENT_EVERY_MS = 1000 / 20
-
 const Sensor = React.memo<Props>(
   ({ serverAddress, device, sensor, enableThresholdChange }) => {
     const serverConnection = useServerStore(
@@ -98,32 +92,11 @@ const Sensor = React.memo<Props>(
     const containerRef = React.useRef<HTMLDivElement>(null)
     const currentlyDownRef = React.useRef<boolean>(false)
 
-    const [{ value: sensorValue }, setSensorValue] = useSpring(() => ({
-      value: 0,
-      config: { duration: BACKEND_EVENT_SENT_EVERY_MS, clamp: true }
-    }))
-
-    const handleInputEvent = React.useCallback(
-      (inputData: DeviceInputData) => {
-        const value = inputData.sensors[sensor.sensorIndex]
-
-        setSensorValue({
-          value
-        })
-      },
-      [sensor.sensorIndex, setSensorValue]
-    )
-
-    React.useEffect(() => {
-      if (!serverConnection) {
-        return
-      }
-
-      return serverConnection.subscribeToInputEvents(
-        device.id,
-        handleInputEvent
-      )
-    }, [device.id, handleInputEvent, serverConnection])
+    const sensorValue = useSensorValueSpring({
+      serverConnection,
+      deviceId: device.id,
+      sensorIndex: sensor.sensorIndex
+    })
 
     const [{ value: thresholdValue }, setThresholdValue] = useSpring(() => ({
       value: sensor.threshold
