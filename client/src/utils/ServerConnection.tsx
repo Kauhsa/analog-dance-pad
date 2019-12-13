@@ -27,7 +27,9 @@ class ServerConnection {
     this.rateEventSubscriptions = new SubscriptionManager()
 
     this.ioSocket = io(settings.address, {
-      transports: ['websocket']
+      transports: ['websocket'],
+      reconnectionDelay: 250,
+      reconnectionDelayMax: 1000
     })
     this.ioSocket.on('connect', settings.onConnect)
     this.ioSocket.on('disconnect', settings.onDisconnect)
