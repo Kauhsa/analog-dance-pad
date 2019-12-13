@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
-import { isEmpty, map } from 'lodash'
+import { sortBy } from 'lodash'
 
 import scale from '../../utils/scale'
 import { colors } from '../../utils/colors'
@@ -56,6 +56,12 @@ const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
   // to properly update on location change.
   useLocation()
 
+  const sortedDevices = useMemo(() => {
+    if (server.connectionStatus === ServerConnectionStatus.Connected) {
+      return sortBy(Object.values(server.devices), d => d.configuration.name)
+    }
+  }, [server])
+
   return (
     <div>
       <ServerLabel>
@@ -64,10 +70,11 @@ const MenuServer = React.memo<Props>(({ server, onDeviceClick }) => {
       </ServerLabel>
 
       {server.connectionStatus === ServerConnectionStatus.Connected ? (
-        isEmpty(server.devices) ? (
+        sortedDevices && sortedDevices.length === 0 ? (
           <Message>No devices connected to server!</Message>
         ) : (
-          map(server.devices, device => (
+          sortedDevices &&
+          sortedDevices.map(device => (
             <DeviceLink
               key={device.id}
               to={deviceUrl(server.address, device.id)}
