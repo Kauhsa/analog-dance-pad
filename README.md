@@ -107,6 +107,15 @@ You probably need to set some environment variables for the client to be useful.
   - Disabled by default.
   - Set to `true` enable.
 
+## Troubleshooting
+
+### The UI shows more sensors than I have
+
+The firmware reads all 12 ADC pins on the Teensy. You may get fake readings from pins that have no sensors plugged in and are not grounded. If pressing a sensor causes more than one value to go up:
+  - Determine which pins are unused. You can use this [pinout](https://www.pjrc.com/teensy/card2a.pdf). The sensors follow the pin order, e.g. ADC0 = 1, ADC1 = 2...
+  - Press settings and disable the corresponding sensors in the UI, or
+  - Ground the unused inputs on the board.
+
 ## License
 
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
