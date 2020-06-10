@@ -43,7 +43,8 @@ This results `AnalogDancePad.hex` in `build` folder that you can upload to Teens
 
 ### Server
 
-Server has been tested with NodeJS 12. You might need `libudev-dev` or similar package for your operating system in case `usb-detection` library doesn't have a prebuilt binary for you. 
+Server has been tested with NodeJS 12 and 14. You might need `libudev-dev` or similar package for your operating system in case `usb-detection` library doesn't have a prebuilt binary for you (see https://github.com/node-hid/node-hid/#installation).
+Also note that on Linux, accessing USB devices by default require root permissions. If you do not wish to run the server as root, you can set up udev rules by following https://github.com/node-hid/node-hid/#udev-device-permissions.
 
 For development, you can use:
 
