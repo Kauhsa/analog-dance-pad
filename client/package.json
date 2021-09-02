@@ -9,7 +9,7 @@
     "@fortawesome/react-fontawesome": "^0.1.7",
     "chroma-js": "^2.1.0",
     "formik": "^2.0.3",
-    "immer": "^5.0.0",
+    "immer": "^9.0.6",
     "lodash-es": "^4.17.15",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
