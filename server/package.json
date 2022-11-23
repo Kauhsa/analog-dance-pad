@@ -11,7 +11,7 @@
     "lodash": "^4.17.15",
     "node-hid": "^0.7.9",
     "p-queue": "^6.2.1",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.5.0",
     "usb-detection": "^4.5.0"
   },
   "devDependencies": {
